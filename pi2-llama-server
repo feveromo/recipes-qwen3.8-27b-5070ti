@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SERVER=${PI2_LLAMA_SERVER_BIN:-/home/fever/Dev/llama.cpp-pi2/build-cuda/bin/llama-server}
-MODEL=${PI2_LLAMA_MODEL:-/home/fever/Models/huihui-qwen3.8-27b-abliterated/Huihui-Qwen3.8-27B-abliterated-Q3_K.gguf}
+SERVER=${PI2_LLAMA_SERVER_BIN:-/home/fever/Dev/llama.cpp/build-cuda/bin/llama-server}
+MODEL=${PI2_LLAMA_MODEL:-/home/fever/Models/huihui-qwen3.8-27b-abliterated-ud-q3kxl/Huihui-Qwen3.8-27B-abliterated-UD-Q3_K_XL.gguf}
 MODE=${PI2_LLAMA_MODE:-auto}
-MTP_MIN_FREE_MIB=${PI2_MTP_MIN_FREE_MIB:-15150}
+MTP3_MIN_FREE_MIB=${PI2_MTP3_MIN_FREE_MIB:-15250}
+MTP2_MIN_FREE_MIB=${PI2_MTP2_MIN_FREE_MIB:-15000}
 FULL_MIN_FREE_MIB=${PI2_FULL_MIN_FREE_MIB:-14500}
 
 free_mib=$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits 2>/dev/null | head -1 | tr -dc '0-9' || true)
 free_mib=${free_mib:-0}
 
 if [[ "$MODE" == auto ]]; then
-  if (( free_mib >= MTP_MIN_FREE_MIB )); then
+  if (( free_mib >= MTP3_MIN_FREE_MIB )); then
     MODE=mtp
+  elif (( free_mib >= MTP2_MIN_FREE_MIB )); then
+    MODE=mtp2
   elif (( free_mib >= FULL_MIN_FREE_MIB )); then
     MODE=base
   else
@@ -22,6 +25,10 @@ fi
 
 case "$MODE" in
   mtp)
+    memory_args=(--n-gpu-layers all --fit off)
+    spec_args=(--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-p-min 0 --spec-draft-type-k q4_0 --spec-draft-type-v q4_0)
+    ;;
+  mtp2)
     memory_args=(--n-gpu-layers all --fit off)
     spec_args=(--spec-type draft-mtp --spec-draft-n-max 2 --spec-draft-p-min 0 --spec-draft-type-k q4_0 --spec-draft-type-v q4_0)
     ;;
@@ -34,21 +41,21 @@ case "$MODE" in
     spec_args=(--spec-type none)
     ;;
   *)
-    echo "pi2-llama-server: invalid PI2_LLAMA_MODE=$MODE (expected auto, mtp, base, or fit)" >&2
+    echo "pi2-llama-server: invalid PI2_LLAMA_MODE=$MODE (expected auto, mtp, mtp2, base, or fit)" >&2
     exit 2
     ;;
 esac
 
-echo "pi2-llama-server: mode=$MODE free_vram=${free_mib}MiB mtp_threshold=${MTP_MIN_FREE_MIB}MiB full_threshold=${FULL_MIN_FREE_MIB}MiB" >&2
+echo "pi2-llama-server: mode=$MODE free_vram=${free_mib}MiB mtp3_threshold=${MTP3_MIN_FREE_MIB}MiB mtp2_threshold=${MTP2_MIN_FREE_MIB}MiB full_threshold=${FULL_MIN_FREE_MIB}MiB" >&2
 
 exec "$SERVER" \
   --model "$MODEL" \
-  --alias huihui-qwen3.8-27b-abliterated-q3-k \
+  --alias huihui-qwen3.8-27b-abliterated-ud-q3-k-xl \
   --host 127.0.0.1 --port 8003 --api-key llamacpp \
   --ctx-size 65536 "${memory_args[@]}" \
   --flash-attn on --cache-type-k q4_0 --cache-type-v q4_0 \
   --batch-size 512 --ubatch-size 128 --threads 8 --threads-batch 8 --parallel 1 \
-  --jinja --reasoning on --reasoning-budget -1 --no-warmup \
+  --jinja --reasoning on --reasoning-budget -1 --reasoning-preserve --no-warmup \
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 \
   --presence-penalty 0.0 --repeat-penalty 1.0 --seed 3407 \
   "${spec_args[@]}"

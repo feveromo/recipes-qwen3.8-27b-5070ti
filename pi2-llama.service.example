@@ -1,10 +1,10 @@
 [Unit]
-Description=Pi2 Qwen3.8 27B llama.cpp server
+Description=Pi2 Huihui Qwen3.8 27B UD-Q3_K_XL llama.cpp server
 After=graphical-session.target
 
 [Service]
 Type=simple
-WorkingDirectory=/home/fever/Dev/llama.cpp-pi2
+WorkingDirectory=/home/fever/Dev/llama.cpp
 Environment=LD_LIBRARY_PATH=/usr/local/cuda-13.1/lib64
 EnvironmentFile=-%t/pi2-llama.env
 ExecStart=/home/fever/.pi2/agent/bin/pi2-llama-server
