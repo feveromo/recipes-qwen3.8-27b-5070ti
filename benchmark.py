@@ -62,6 +62,7 @@ def main():
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
 
+    context = request_json(args.url + "/props")["default_generation_settings"]["n_ctx"]
     tokenized = request_json(args.url + "/tokenize", {"content": PROMPT, "add_special": True})
     prompt_tokens = len(tokenized.get("tokens", []))
     results = []
@@ -150,7 +151,7 @@ def main():
 
     doc = {
         "label": args.label,
-        "server_context": 65536,
+        "server_context": context,
         "generation": {
             "n_predict": args.tokens,
             "temperature": 0.0,
