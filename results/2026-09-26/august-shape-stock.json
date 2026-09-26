@@ -1,0 +1,55 @@
+{
+  "label": "august-shape-stock",
+  "server_context": 98304,
+  "generation": {
+    "n_predict": 512,
+    "temperature": 0.0,
+    "seed": 3407,
+    "ignore_eos": true
+  },
+  "prompt_tokens": 7322,
+  "results": [
+    {
+      "run": 1,
+      "prompt_tokens": 7322,
+      "wall_s": 11.304712101991754,
+      "ttft_s": 4.364097906975076,
+      "predicted_tokens": 512,
+      "predicted_tps": 73.6281851574512,
+      "prompt_tps": 1680.9863500786084,
+      "prompt_ms": 4355.776,
+      "predicted_ms": 6940.277,
+      "peak_vram_mib": 15276,
+      "peak_rss_kib": 1440404,
+      "output_prefix": "\n\n<think>\nThe user wants a detailed technical analysis in continuous prose of at least 900 words. The topics to cover are: GPU memory bandwidth, quantization, KV cache precision, fused attention, and speculative decoding. They want it in co"
+    },
+    {
+      "run": 2,
+      "prompt_tokens": 7322,
+      "wall_s": 11.416021267010365,
+      "ttft_s": 4.395324081997387,
+      "predicted_tokens": 512,
+      "predicted_tps": 72.78782349451349,
+      "prompt_tps": 1668.985969075208,
+      "prompt_ms": 4387.095,
+      "predicted_ms": 7020.405,
+      "peak_vram_mib": 15276,
+      "peak_rss_kib": 1467428,
+      "output_prefix": "\n\n<think>\nThe user wants a detailed technical analysis in continuous prose of at least 900 words. The topics to cover are: GPU memory bandwidth, quantization, KV cache precision, fused attention, and speculative decoding. They want it in co"
+    },
+    {
+      "run": 3,
+      "prompt_tokens": 7322,
+      "wall_s": 11.455778595991433,
+      "ttft_s": 4.4180075009935535,
+      "predicted_tokens": 512,
+      "predicted_tps": 72.611084657562,
+      "prompt_tps": 1660.3675348939094,
+      "prompt_ms": 4409.867,
+      "predicted_ms": 7037.493,
+      "peak_vram_mib": 15276,
+      "peak_rss_kib": 1468952,
+      "output_prefix": "\n\n<think>\nThe user wants a detailed technical analysis in continuous prose of at least 900 words. The topics to cover are: GPU memory bandwidth, quantization, KV cache precision, fused attention, and speculative decoding. They want it in co"
+    }
+  ]
+}

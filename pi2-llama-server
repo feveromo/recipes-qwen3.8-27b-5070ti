@@ -1,61 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SERVER=${PI2_LLAMA_SERVER_BIN:-/home/fever/Dev/llama.cpp/build-cuda/bin/llama-server}
-MODEL=${PI2_LLAMA_MODEL:-/home/fever/Models/huihui-qwen3.8-27b-abliterated-ud-q3kxl/Huihui-Qwen3.8-27B-abliterated-UD-Q3_K_XL.gguf}
-MODE=${PI2_LLAMA_MODE:-auto}
-MTP3_MIN_FREE_MIB=${PI2_MTP3_MIN_FREE_MIB:-15250}
-MTP2_MIN_FREE_MIB=${PI2_MTP2_MIN_FREE_MIB:-15000}
-FULL_MIN_FREE_MIB=${PI2_FULL_MIN_FREE_MIB:-14500}
+SERVER=${PI2_LLAMA_SERVER_BIN:-/home/fever/Dev/llama.cpp-pi2-cuda-20260926/build/bin/llama-server}
+MODEL=${PI2_LLAMA_MODEL:-/home/fever/Models/huihui-qwen3.8-27b-abliterated-gsq-rco-iq3s/Huihui-Qwen3.8-27B-abliterated-GSQ-RCO-IQ3_S-mtp.gguf}
+[[ -x "$SERVER" && -r "$MODEL" ]] || { echo 'pi2-llama-server: server binary or model is missing' >&2; exit 1; }
 
-free_mib=$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits 2>/dev/null | head -1 | tr -dc '0-9' || true)
-free_mib=${free_mib:-0}
+# Embedded MTP head; F16 draft KV keeps its GQA-6 attention on the MMA kernel.
+speculation=(--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-type-k f16 --spec-draft-type-v f16)
 
-if [[ "$MODE" == auto ]]; then
-  if (( free_mib >= MTP3_MIN_FREE_MIB )); then
-    MODE=mtp
-  elif (( free_mib >= MTP2_MIN_FREE_MIB )); then
-    MODE=mtp2
-  elif (( free_mib >= FULL_MIN_FREE_MIB )); then
-    MODE=base
-  else
-    MODE=fit
-  fi
-fi
-
-case "$MODE" in
-  mtp)
-    memory_args=(--n-gpu-layers all --fit off)
-    spec_args=(--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-p-min 0 --spec-draft-type-k q4_0 --spec-draft-type-v q4_0)
-    ;;
-  mtp2)
-    memory_args=(--n-gpu-layers all --fit off)
-    spec_args=(--spec-type draft-mtp --spec-draft-n-max 2 --spec-draft-p-min 0 --spec-draft-type-k q4_0 --spec-draft-type-v q4_0)
-    ;;
-  base)
-    memory_args=(--n-gpu-layers all --fit off)
-    spec_args=(--spec-type none)
-    ;;
-  fit)
-    memory_args=(--n-gpu-layers auto --fit on --fit-target 512)
-    spec_args=(--spec-type none)
-    ;;
-  *)
-    echo "pi2-llama-server: invalid PI2_LLAMA_MODE=$MODE (expected auto, mtp, mtp2, base, or fit)" >&2
-    exit 2
-    ;;
-esac
-
-echo "pi2-llama-server: mode=$MODE free_vram=${free_mib}MiB mtp3_threshold=${MTP3_MIN_FREE_MIB}MiB mtp2_threshold=${MTP2_MIN_FREE_MIB}MiB full_threshold=${FULL_MIN_FREE_MIB}MiB" >&2
-
-exec "$SERVER" \
-  --model "$MODEL" \
-  --alias huihui-qwen3.8-27b-abliterated-ud-q3-k-xl \
-  --host 127.0.0.1 --port 8003 --api-key llamacpp \
-  --ctx-size 65536 "${memory_args[@]}" \
+# Fixed full offload; never silently fall back to UVM or CPU weight layers.
+exec env -u GGML_CUDA_ENABLE_UNIFIED_MEMORY "$SERVER" \
+  --model "$MODEL" --alias huihui-qwen3.8-27b-abliterated-gsq-rco-iq3-s \
+  --host 127.0.0.1 --port 8003 --api-key llamacpp --cors-origins localhost \
+  --ctx-size 98304 --n-gpu-layers all --fit off --no-context-shift \
   --flash-attn on --cache-type-k q4_0 --cache-type-v q4_0 \
-  --batch-size 512 --ubatch-size 128 --threads 8 --threads-batch 8 --parallel 1 \
-  --jinja --reasoning on --reasoning-budget -1 --reasoning-preserve --no-warmup \
+  --batch-size 512 --ubatch-size 256 --threads 8 --threads-batch 8 --parallel 1 \
+  --cache-ram 0 --ctx-checkpoints 0 --slots --metrics \
+  --jinja --reasoning on --reasoning-effort xhigh --reasoning-budget 16384 --reasoning-preserve \
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 \
-  --presence-penalty 0.0 --repeat-penalty 1.0 --seed 3407 \
-  "${spec_args[@]}"
+  --presence-penalty 0.0 --repeat-penalty 1.0 \
+  "${speculation[@]}"
