@@ -1,12 +1,12 @@
 [Unit]
-Description=Pi2 Huihui Qwen3.8 27B GSQ-RCO-IQ3_S MTP 96K xhigh llama.cpp server
+Description=Pi2 Huihui Qwen3.8 27B GSQ-RCO-IQ3_S MTP v2 128K xhigh llama.cpp server
 After=graphical-session.target
 StartLimitIntervalSec=300
 StartLimitBurst=2
 
 [Service]
 Type=simple
-WorkingDirectory=/home/fever/Dev/llama.cpp-pi2-cuda-20260926
+WorkingDirectory=/home/fever/Dev/llama.cpp-pi2-cuda-20260927
 Environment=LD_LIBRARY_PATH=/usr/local/cuda-13.1/lib64
 ExecStart=/home/fever/.pi2/agent/bin/pi2-llama-server
 Restart=on-failure

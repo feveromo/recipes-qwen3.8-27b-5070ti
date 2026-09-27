@@ -36,6 +36,8 @@ def main():
     ap.add_argument("--repeats", type=int, default=280)
     ap.add_argument("--label", required=True)
     ap.add_argument("--output", required=True)
+    ap.add_argument("--server-sampling", action="store_true", help="use the server's sampler (temp/top-k/top-p from its CLI) instead of temperature 0")
+    ap.add_argument("--vary-seed", action="store_true", help="seed 3407+run, so repeated runs sample different text")
     args = ap.parse_args()
     prompt = CORPUS * args.repeats + INSTRUCTION
     props = request_json(args.url + "/props")
@@ -57,6 +59,10 @@ def main():
                  "max_tokens":args.tokens,"temperature":0.0,"seed":3407,"stream":True,
                  "stream_options":{"include_usage":True},"cache_prompt":False,"ignore_eos":True,
                  "chat_template_kwargs":{"enable_thinking":True,"reasoning_effort":"xhigh","preserve_thinking":True}}
+        if args.vary_seed:
+            payload["seed"] = 3407 + run
+        if args.server_sampling:
+            payload.pop("temperature")
         req=urllib.request.Request(args.url+"/v1/chat/completions", data=json.dumps(payload).encode(), headers={"Content-Type":"application/json","Authorization":"Bearer llamacpp"})
         t0=time.perf_counter(); first=None; first_answer=None; final=None; text=[]
         with urllib.request.urlopen(req, timeout=600) as r:
@@ -91,6 +97,6 @@ def main():
           "output_prefix":"".join(text)[:240]
         }
         results.append(r); print(json.dumps(r), flush=True)
-    doc={"label":args.label,"server_context":context,"server_props":props,"generation":{"max_tokens":args.tokens,"temperature":0.0,"seed":3407,"ignore_eos":True,"reasoning_effort":"xhigh","endpoint":"/v1/chat/completions"},"prompt_tokens":n_prompt,"results":results}
+    doc={"label":args.label,"server_context":context,"server_props":props,"generation":{"max_tokens":args.tokens,"temperature":"server sampler" if args.server_sampling else 0.0,"seed":"3407+run" if args.vary_seed else 3407,"ignore_eos":True,"reasoning_effort":"xhigh","endpoint":"/v1/chat/completions"},"prompt_tokens":n_prompt,"results":results}
     with open(args.output,"w") as f: json.dump(doc,f,indent=2)
 if __name__=="__main__": main()
