@@ -1,0 +1,211 @@
+{
+ "final-base-greedy": [
+  {
+   "accepted": 161,
+   "generated": 279,
+   "mean_len": 2.71
+  },
+  {
+   "accepted": 161,
+   "generated": 279,
+   "mean_len": 2.71
+  },
+  {
+   "accepted": 294,
+   "generated": 649,
+   "mean_len": 2.35
+  },
+  {
+   "accepted": 289,
+   "generated": 663,
+   "mean_len": 2.31
+  },
+  {
+   "accepted": 280,
+   "generated": 693,
+   "mean_len": 2.21
+  }
+ ],
+ "final-int-greedy": [
+  {
+   "accepted": 162,
+   "generated": 277,
+   "mean_len": 2.74
+  },
+  {
+   "accepted": 164,
+   "generated": 271,
+   "mean_len": 2.8
+  },
+  {
+   "accepted": 288,
+   "generated": 664,
+   "mean_len": 2.3
+  },
+  {
+   "accepted": 290,
+   "generated": 661,
+   "mean_len": 2.31
+  },
+  {
+   "accepted": 293,
+   "generated": 650,
+   "mean_len": 2.35
+  }
+ ],
+ "final-base-samp": [
+  {
+   "accepted": 169,
+   "generated": 257,
+   "mean_len": 2.97
+  },
+  {
+   "accepted": 161,
+   "generated": 278,
+   "mean_len": 2.73
+  },
+  {
+   "accepted": 158,
+   "generated": 290,
+   "mean_len": 2.63
+  },
+  {
+   "accepted": 162,
+   "generated": 278,
+   "mean_len": 2.74
+  },
+  {
+   "accepted": 161,
+   "generated": 279,
+   "mean_len": 2.71
+  },
+  {
+   "accepted": 151,
+   "generated": 311,
+   "mean_len": 2.45
+  },
+  {
+   "accepted": 291,
+   "generated": 655,
+   "mean_len": 2.33
+  },
+  {
+   "accepted": 252,
+   "generated": 773,
+   "mean_len": 1.98
+  },
+  {
+   "accepted": 272,
+   "generated": 712,
+   "mean_len": 2.14
+  },
+  {
+   "accepted": 258,
+   "generated": 755,
+   "mean_len": 2.02
+  }
+ ],
+ "final-int-samp": [
+  {
+   "accepted": 153,
+   "generated": 300,
+   "mean_len": 2.51
+  },
+  {
+   "accepted": 166,
+   "generated": 266,
+   "mean_len": 2.87
+  },
+  {
+   "accepted": 166,
+   "generated": 267,
+   "mean_len": 2.87
+  },
+  {
+   "accepted": 166,
+   "generated": 267,
+   "mean_len": 2.87
+  },
+  {
+   "accepted": 162,
+   "generated": 278,
+   "mean_len": 2.74
+  },
+  {
+   "accepted": 162,
+   "generated": 277,
+   "mean_len": 2.74
+  },
+  {
+   "accepted": 291,
+   "generated": 657,
+   "mean_len": 2.33
+  },
+  {
+   "accepted": 312,
+   "generated": 595,
+   "mean_len": 2.57
+  },
+  {
+   "accepted": 306,
+   "generated": 615,
+   "mean_len": 2.49
+  },
+  {
+   "accepted": 286,
+   "generated": 672,
+   "mean_len": 2.28
+  }
+ ],
+ "final-int-128k": [
+  {
+   "accepted": 296,
+   "generated": 644,
+   "mean_len": 2.38
+  }
+ ],
+ "vocab-personal": [
+  {
+   "accepted": 162,
+   "generated": 277,
+   "mean_len": 2.74
+  },
+  {
+   "accepted": 164,
+   "generated": 271,
+   "mean_len": 2.8
+  },
+  {
+   "accepted": 288,
+   "generated": 664,
+   "mean_len": 2.3
+  },
+  {
+   "accepted": 290,
+   "generated": 661,
+   "mean_len": 2.31
+  }
+ ],
+ "vocab-generic": [
+  {
+   "accepted": 158,
+   "generated": 289,
+   "mean_len": 2.63
+  },
+  {
+   "accepted": 164,
+   "generated": 271,
+   "mean_len": 2.8
+  },
+  {
+   "accepted": 294,
+   "generated": 646,
+   "mean_len": 2.36
+  },
+  {
+   "accepted": 291,
+   "generated": 658,
+   "mean_len": 2.32
+  }
+ ]
+}

@@ -1,18 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SERVER=${PI2_LLAMA_SERVER_BIN:-/home/fever/Dev/llama.cpp-pi2-cuda-20260926/build/bin/llama-server}
+SERVER=${PI2_LLAMA_SERVER_BIN:-/home/fever/Dev/llama.cpp-pi2-cuda-20260927/build/bin/llama-server}
 MODEL=${PI2_LLAMA_MODEL:-/home/fever/Models/huihui-qwen3.8-27b-abliterated-gsq-rco-iq3s/Huihui-Qwen3.8-27B-abliterated-GSQ-RCO-IQ3_S-mtp.gguf}
-[[ -x "$SERVER" && -r "$MODEL" ]] || { echo 'pi2-llama-server: server binary or model is missing' >&2; exit 1; }
+DRAFT_VOCAB=${PI2_DRAFT_VOCAB:-/home/fever/.pi2/agent/draft-vocab.txt}
+# 128K leaves ~1.2 GB for the desktop; with heavy desktop GPU use: systemctl --user set-environment PI2_CTX=98304
+CTX=${PI2_CTX:-131072}
+[[ -x "$SERVER" && -r "$MODEL" && -r "$DRAFT_VOCAB" ]] || { echo 'pi2-llama-server: server binary, model or draft vocabulary is missing' >&2; exit 1; }
 
-# Embedded MTP head; F16 draft KV keeps its GQA-6 attention on the MMA kernel.
-speculation=(--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-type-k f16 --spec-draft-type-v f16)
+# Embedded MTP head: Q4_0 draft KV (1-2 token GQA attention reads Q4_0 directly on the MMA path), all draft steps in one
+# graph over a 16K-row reduced lm-head, verified rows folded into the next draft graph, and Gumbel-coupled sampling
+# (lossless; raises draft acceptance at temperature > 0).
+speculation=(--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-type-k q4_0 --spec-draft-type-v q4_0
+  --spec-draft-vocab "$DRAFT_VOCAB" --spec-draft-vocab-n 16384 --spec-draft-fuse-catchup --spec-coupled-sampling)
 
 # Fixed full offload; never silently fall back to UVM or CPU weight layers.
 exec env -u GGML_CUDA_ENABLE_UNIFIED_MEMORY "$SERVER" \
   --model "$MODEL" --alias huihui-qwen3.8-27b-abliterated-gsq-rco-iq3-s \
   --host 127.0.0.1 --port 8003 --api-key llamacpp --cors-origins localhost \
-  --ctx-size 98304 --n-gpu-layers all --fit off --no-context-shift \
+  --ctx-size "$CTX" --n-gpu-layers all --fit off --no-context-shift \
   --flash-attn on --cache-type-k q4_0 --cache-type-v q4_0 \
   --batch-size 512 --ubatch-size 256 --threads 8 --threads-batch 8 --parallel 1 \
   --cache-ram 0 --ctx-checkpoints 0 --slots --metrics \

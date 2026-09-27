@@ -1,0 +1,36 @@
+{
+  "ctx_size": 131072,
+  "filler_repeats": 1530,
+  "results": [
+    {
+      "attempt": "cold",
+      "passed": true,
+      "prompt_tokens": 119457,
+      "cached": 0,
+      "wall_s": 75.7,
+      "prompt_tps": 1609.4580413411522,
+      "decode_tps": 139.25771195134868,
+      "got": {
+        "alpha": "ALPHA_7193",
+        "beta": "BETA_4826",
+        "gamma": "GAMMA_6308",
+        "omega": "OMEGA_2951"
+      }
+    },
+    {
+      "attempt": "followup",
+      "passed": true,
+      "prompt_tokens": 119666,
+      "cached": 119645,
+      "wall_s": 0.7,
+      "prompt_tps": 365.4970760233918,
+      "decode_tps": 138.81202148161103,
+      "got": {
+        "alpha": "ALPHA_7193",
+        "beta": "BETA_4826",
+        "gamma": "GAMMA_6308",
+        "omega": "OMEGA_2951"
+      }
+    }
+  ]
+}
