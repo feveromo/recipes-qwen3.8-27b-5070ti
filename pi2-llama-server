@@ -1,17 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SERVER=${PI2_LLAMA_SERVER_BIN:-/home/fever/Dev/llama.cpp-pi2-cuda-20260927/build/bin/llama-server}
+SERVER=${PI2_LLAMA_SERVER_BIN:-/home/fever/Dev/llama.cpp-pi2-cuda-20260928/build/bin/llama-server}
 MODEL=${PI2_LLAMA_MODEL:-/home/fever/Models/huihui-qwen3.8-27b-abliterated-gsq-rco-iq3s/Huihui-Qwen3.8-27B-abliterated-GSQ-RCO-IQ3_S-mtp.gguf}
 DRAFT_VOCAB=${PI2_DRAFT_VOCAB:-/home/fever/.pi2/agent/draft-vocab.txt}
-# 128K leaves ~1.2 GB for the desktop; with heavy desktop GPU use: systemctl --user set-environment PI2_CTX=98304
-CTX=${PI2_CTX:-131072}
 [[ -x "$SERVER" && -r "$MODEL" && -r "$DRAFT_VOCAB" ]] || { echo 'pi2-llama-server: server binary, model or draft vocabulary is missing' >&2; exit 1; }
 
-# Embedded MTP head: Q4_0 draft KV (1-2 token GQA attention reads Q4_0 directly on the MMA path), all draft steps in one
-# graph over a 16K-row reduced lm-head, verified rows folded into the next draft graph, and Gumbel-coupled sampling
-# (lossless; raises draft acceptance at temperature > 0).
-speculation=(--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-type-k q4_0 --spec-draft-type-v q4_0
+# Context from free VRAM at start (measured v3 peaks: 14,536 MiB at 128K, ~13,910 MiB at 96K; +350 MiB margin), so a busy
+# desktop can't push the server into a mid-request out-of-memory. Override: PI2_CTX (for the systemd service:
+# systemctl --user set-environment PI2_CTX=98304).
+if [[ -n "${PI2_CTX:-}" ]]; then
+  CTX=$PI2_CTX
+else
+  free_mib=$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits 2>/dev/null | head -1 | tr -d ' ')
+  if [[ ! "$free_mib" =~ ^[0-9]+$ ]]; then CTX=98304
+  elif (( free_mib >= 14536 + 350 )); then CTX=131072
+  elif (( free_mib >= 13910 + 350 )); then CTX=98304
+  else CTX=65536
+  fi
+  echo "pi2-llama-server: ${free_mib:-?} MiB free on the GPU -> --ctx-size $CTX" >&2
+fi
+
+# Embedded MTP head: Q4_0 draft KV, all draft steps in one graph over a 16K-row reduced lm-head, verified rows folded into
+# the next draft graph, Gumbel-coupled sampling (lossless), and an adaptive draft length of 1-5 tokens per cycle.
+speculation=(--spec-type draft-mtp --spec-draft-n-max 5 --spec-draft-adaptive --spec-draft-type-k q4_0 --spec-draft-type-v q4_0
   --spec-draft-vocab "$DRAFT_VOCAB" --spec-draft-vocab-n 16384 --spec-draft-fuse-catchup --spec-coupled-sampling)
 
 # Fixed full offload; never silently fall back to UVM or CPU weight layers.

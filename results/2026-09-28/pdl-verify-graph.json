@@ -1,0 +1,13 @@
+{
+ "metric": "median verify-graph time, us (short context, 4-token verify)",
+ "runs": {
+  "run 1: v2, PDL off": 17922,
+  "run 2: v3 (before the PDL-default change), PDL off": 17072,
+  "run 3: v2, PDL off": 17962,
+  "run 4: v3 (before the PDL-default change), PDL off": 17094,
+  "run 5: v3 (before the PDL-default change), PDL on": 18279,
+  "run 6: v3 (before the PDL-default change), PDL on": 18295,
+  "run 7: v3 (before the PDL-default change), PDL on": 18368
+ },
+ "note": "v2 with PDL on (its default) measured 18.1 or 19.5 ms per run (bimodal) in the same session; see README."
+}
