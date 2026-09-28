@@ -1,26 +1,25 @@
-# Qwen3.8 27B abliterated on a 5070 Ti: 128K context, MTP-3, custom CUDA kernels v2
+# Qwen3.8 27B abliterated on a 5070 Ti: 128K context, adaptive MTP, custom CUDA kernels v3
 
-Verified on 2026-09-27. This is the current one-card recipe from the same workstation as the earlier versions. It runs Huihui's GSQ-RCO IQ3_S quant with its embedded MTP head at **131,072 tokens of context** on a 16 GB RTX 5070 Ti, with a local llama.cpp patch ([`cuda-kernels.patch`](cuda-kernels.patch), v2) that rewrites most of the decode and prefill hot path for this model and GPU.
+Verified on 2026-09-28. This is the current one-card recipe from the same workstation as the earlier versions. It runs Huihui's GSQ-RCO IQ3_S quant with its embedded MTP head at up to **131,072 tokens of context** on a 16 GB RTX 5070 Ti, with a local llama.cpp patch ([`cuda-kernels.patch`](cuda-kernels.patch), v3) that rewrites most of the decode and prefill hot path for this model and GPU.
 
-Same weights and launcher, previous recipe's patched build (v1) vs this one (v2), 96K context, run back to back:
+Same weights, previous recipe's build (v2) vs this one (v3), run back to back:
 
-| | v1 (2026-09-26) | **v2** | change |
+| | v2 (2026-09-27) | **v3** | change |
 |---|---:|---:|---:|
-| decode, short prompt | 99.4 tok/s | **131** | +32% |
-| decode, 15.7K prompt | 83.2 | **104.7** | +26% |
-| decode, 62.5K prompt | 74.9 | **98.0** | +31% |
-| decode, 92.9K prompt | 68.4 | **94.8** | +39% |
-| decode, real sampling (T 1.0), 15.7K, 3 seeds | 75.6 | **111.7** | +48% |
-| prefill, 62.5K / 92.9K prompt | 1,276 / 1,125 | **1,814 / 1,696** | +42% / +51% |
-| time to first token, 92.9K prompt | 82.7 s | **54.9 s** | −34% |
-| llama-server peak VRAM at 96K | 14,618 MiB | **14,282 MiB** | −336 MiB |
-| largest practical context | 96K | **128K** | |
+| decode, **real agent sessions** (28 regenerated turns, production sampler) | 136.6 tok/s | **147.2** | **+7.8%** |
+| prefill, real agent sessions | 2,005 tok/s | **2,177** | +8.6% |
+| decode, 15.7K / 62.5K / 92.9K prompt (temperature 0) | 104.5 / 97.8 / 94.7 | **109.6 / 99.7 / 100.2** | +5% / +2% / +6% |
+| prefill, 15.7K / 62.5K / 92.9K prompt | 2,028 / 1,812 / 1,694 | **2,200 / 1,949 / 1,814** | +8% / +8% / +7% |
+| time to first token, 92.9K prompt | 55.0 s | **51.3 s** | −7% |
+| llama-server peak VRAM at 96K / 128K | 14,286 / ~14,930 MiB | **13,898 / 14,530 MiB** | −390 / −400 MiB |
 
-At 128K a 128,794-token prompt prefills at 1,576 tok/s and then decodes at 91 tok/s. Output quality is unchanged within noise (KL divergence vs v1 below v1's own batch-size noise, see [Numerical checks](#numerical-checks)).
+At 128K a 128,794-token prompt prefills at 1,680 tok/s and then decodes at 93 tok/s. Output quality is unchanged within noise ([Numerical checks](#numerical-checks)).
 
-Temperature-0 decode rates move with draft acceptance, which changes whenever the greedy text changes. The steadier number is time per verify cycle: **21.2 / 22.0 / 23.6 / 24.8 ms** at short / 15.7K / 62.5K / 92.9K, down from 27.3 / 28.2 / 30.8 / 32.3 ms (−22% to −23%).
+For reference, v2 was +26–39% faster than v1 on decode and up to +51% on prefill ([previous README](https://github.com/feveromo/recipes-qwen3.8-27b-5070ti/blob/f249515/README.md)).
 
-The caveats from the previous recipes still hold: this is a 16 GB configuration with little spare VRAM, and the patch is not upstream. It was written and tested only for this model on this GPU (`sm_120`). Every new kernel path checks the architecture, types and shapes it was tested for, and falls back to the v1/stock code otherwise.
+The biggest single finding of this round is not a kernel: **upstream llama.cpp's programmatic dependent launch (PDL) made this setup randomly ~7% slower**, see [PDL](#pdl-is-off-by-default). The v3 patch turns it off by default.
+
+The usual caveats hold: this is a 16 GB configuration with little spare VRAM, and the patch is not upstream. It was written and tested only for this model on this GPU (`sm_120`). Every new kernel path checks the architecture, types and shapes it was tested for, and falls back to the v2/v1/stock code otherwise.
 
 ## Verified hardware and software
 
@@ -30,14 +29,14 @@ The caveats from the previous recipes still hold: this is a 16 GB configuration 
 - OS: Ubuntu 26.04.1 LTS, kernel 7.0.0-31-generic
 - NVIDIA driver: 610.57.04
 - CUDA toolkit: 13.1.115, host compiler g++-13
-- llama.cpp: build 11191, commit `4b1a27fa0eb875bbca4f6cfe936e3d65adc685c0`, plus [`cuda-kernels.patch`](cuda-kernels.patch) (SHA-256 `a4eaa130344bded44b220a5fb80fa39a1a4436546ed61048be660c4d754bb29c`; includes the v1 changes)
+- llama.cpp: build 11191, commit `4b1a27fa0eb875bbca4f6cfe936e3d65adc685c0`, plus [`cuda-kernels.patch`](cuda-kernels.patch) (SHA-256 `06606651b7d801a15f77a16526c48d0cfaa943cd39c34a7209f908057b125a94`; includes the v1 and v2 changes)
 - Model repository: `huihui-ai/Huihui-Qwen3.8-27B-abliterated-GGUF`, revision `3f101cd22b7999228bbd5d79a33975414eb9758b`
 - Model file: `Huihui-Qwen3.8-27B-abliterated-GSQ-RCO-IQ3_S-mtp.gguf`, 12,120,016,416 bytes, SHA-256 `eea0638e283433e27b0edbd409b552be467a75ecc777d91c51db554c0a644c19`
-- Context: 131,072. Target KV: Q4_0 K/V. MTP draft KV: Q4_0 K/V
-- Speculation: embedded MTP, up to 3 draft tokens, fused reduced-vocabulary drafting, Gumbel-coupled sampling
+- Context: up to 131,072, chosen at start from free VRAM. Target KV: Q4_0 K/V. MTP draft KV: Q4_0 K/V
+- Speculation: embedded MTP, adaptive 1–5 draft tokens per cycle, fused reduced-vocabulary drafting, Gumbel-coupled sampling
 - Batch / ubatch: 512 / 256. Threads: 8. Parallel slots: 1
 
-The model has 64 target layers (48 Gated DeltaNet linear-attention layers and 16 full-attention layers with 24 query heads, 4 KV heads, head size 256) plus the embedded MTP (NextN) layer. Native context is 262,144. 128K is the practical limit here with a desktop running on the same card (see [128K context](#128k-context)).
+The model has 64 target layers (48 Gated DeltaNet linear-attention layers and 16 full-attention layers with 24 query heads, 4 KV heads, head size 256) plus the embedded MTP (NextN) layer. Native context is 262,144; 128K is the practical limit here with a desktop running on the same card.
 
 ## Download and verify the model
 
@@ -65,12 +64,12 @@ eea0638e283433e27b0edbd409b552be467a75ecc777d91c51db554c0a644c19  .../Huihui-Qwe
 
 ```bash
 RECIPE=/home/fever/Dev/recipes-qwen3.8-27b-5070ti
-LLAMA=/home/fever/Dev/llama.cpp-pi2-cuda-20260927
+LLAMA=/home/fever/Dev/llama.cpp-pi2-cuda-20260928
 
 git clone https://github.com/ggml-org/llama.cpp.git "$LLAMA"
 cd "$LLAMA"
 git checkout 4b1a27fa0eb875bbca4f6cfe936e3d65adc685c0
-sha256sum "$RECIPE/cuda-kernels.patch"   # a4eaa130...bb29c
+sha256sum "$RECIPE/cuda-kernels.patch"   # 06606651...25a94
 git apply --check "$RECIPE/cuda-kernels.patch"
 git apply "$RECIPE/cuda-kernels.patch"
 
@@ -114,14 +113,15 @@ cmake --build build --target llama-server llama-bench --parallel 12
 LD_LIBRARY_PATH=/usr/local/cuda-13.1/lib64 ./build/bin/llama-server --version
 ```
 
-The build takes about three minutes and `--version` reports `build 11191, commit 4b1a27fa0`. The configure flags are unchanged from the previous recipe; many restate defaults so the build is exactly the one measured. The patch is made against `4b1a27fa0`; on newer upstream commits expect manual merges (it touches the CUDA backend, the MTP code in `common/` and `src/`, and the server).
+The build takes about three minutes and `--version` reports `build 11191, commit 4b1a27fa0`. The configure flags are unchanged from the previous recipes; many restate defaults so the build is exactly the one measured. The patch is made against `4b1a27fa0`; on newer upstream commits expect manual merges.
 
 To run the tests, including the cases the patch adds:
 
 ```bash
-cmake --build build --target test-backend-ops test-sampling-coupled --parallel 12
+cmake --build build --target test-backend-ops test-sampling-coupled test-gdn-replay --parallel 12
 LD_LIBRARY_PATH=/usr/local/cuda-13.1/lib64 ./build/bin/test-backend-ops test -b CUDA0
 ./build/bin/test-sampling-coupled
+LD_LIBRARY_PATH=/usr/local/cuda-13.1/lib64 ./build/bin/test-gdn-replay
 ```
 
 ## Draft vocabulary
@@ -136,73 +136,45 @@ python3 build-draft-vocab.py --url http://127.0.0.1:8003 \
   --pi-sessions ~/.pi/agent/sessions --out ~/.pi2/agent/draft-vocab.txt
 ```
 
-The measurements in this README used a vocabulary ranked from my own coding-agent sessions (not published). On held-out sessions it covers 98.4% of generated tokens including the context rows. On this README's synthetic benchmark the generic file performs the same within noise ([`results/2026-09-27/vocab-generic-v2-*.json`](results/2026-09-27/)); on your own coding work a personal file should accept more drafts.
+The measurements in this README used a vocabulary ranked from my own coding-agent sessions (not published). On the synthetic benchmark the generic file performed the same within noise ([`results/2026-09-27/vocab-generic-v2-*.json`](results/2026-09-27/)); on your own work a personal file should accept more drafts.
 
 ## What the patch changes
 
-An nsys profile of the v1 build showed each verify cycle at short context as 21.5 ms of target verification (4-token batch), three 1.4 ms MTP draft graphs (each reading the full 248,320-row lm-head), a 0.5 ms MTP catch-up graph and about 2 ms of host gaps, with ~2,420 kernel launches per cycle. Prefill at ~40K depth spent 44% in quantized matmuls (MMQ) and 37% in flash attention.
+**v1 and v2** (see the [previous README](https://github.com/feveromo/recipes-qwen3.8-27b-5070ti/blob/f249515/README.md) for details and measurements): Q4_0-direct flash attention; a dequantize-once multi-column quantized mat-vec; fused, reduced-vocabulary MTP drafting with a K/V-only catch-up; Gumbel-coupled sampling; Q4_0 draft KV via the MMA attention path; INT8 prefill attention; per-graph activation quantization cache and kernel fusions; pipelined prefill MMQ.
 
-**From v1** (unchanged, see the previous recipe): flash attention reads Q4_0 KV directly on the MMA path; MMVQ with one warp per 4 rows for 2–4 columns; tiny BF16 matrices on the mat-vec kernel.
+**New in v3.** A profile of v2 showed, per ~21 ms short-context cycle: the 4-token verify graph at 18.0 ms (16.2 ms of it the multi-column mat-vec at ~700 GB/s), the fused draft graph at 1.7 ms, and 1.1 ms of GPU idle. The recurrent (Gated DeltaNet) kernel wrote 4 full state snapshots per layer per cycle for rollback, ~600 MB of writes, all resident in VRAM. On real agent sessions, tool-call and code turns accepted 0.75–0.97 of drafts and hit the 3-token draft cap.
 
-**New in v2:**
+1. **Recurrent-state rollback by replay** (`src/llama-memory-recurrent.*`, `gated_delta_net.cu`, `qwen35.cpp`). Instead of snapshotting the full state after every verified token, keep one state per sequence plus a small ring buffer of recent tokens' inputs; a rollback only drops ring rows, and the next graph's GDN kernel replays the accepted ones. Outputs are bit-identical to the snapshot scheme. The recurrent buffers shrink from 576 to 156 MiB, and a 7-token draft costs +34 MiB instead of +608 MiB. `LLAMA_RS_REPLAY=0` restores snapshots.
+2. **Mat-vec for 5–8 tokens** (`mmvq.cu`). The multi-column kernel is extended to 8 columns, with a per-type/shape choice among five configurations, fused gate/up for 2–8 columns including gate/up pairs of different quant types, and 8-byte activation loads. An 8-token verify graph: 31.95 → 21.89 ms; the 4-token one: 18.06 → 17.69 ms.
+3. **Adaptive draft length** (`common/speculative.cpp`, fused draft graph, per-width graph cache). `--spec-draft-n-max 5 --spec-draft-adaptive` chooses 1–5 draft tokens per cycle from online estimates of acceptance and of the cost of each verify width; a per-width graph cache makes switching widths cheap. On the real-session benchmark: 3 fixed 142.2, adaptive ≤ 7 146.9, 5 fixed 148.3, **adaptive ≤ 5 150.7 tok/s** ([`draft-length-*.json`](results/2026-09-28/)).
+4. **Warp-specialized prefill MMQ** (`mmq*.cuh`). For IQ2_XXS/XS/S, IQ3_XXS/S and IQ4_XS, extra warps decode the next weight tile into shared memory while the other warps run the tensor-core math, with registers rebalanced between the two roles (`setmaxnreg`); plus a cheaper MMA epilogue and three prefill fusions (SwiGLU into the down-projection's input quantization, the GDN gated norm into the ssm_out quantization, one shared quantization for gate/up). Bit-identical to v2; big prefill matmuls 6–14% faster.
+5. **PDL off by default** (`common.cuh`), see below.
 
-1. **Multi-column quantized mat-vec** (`mmvq.cu`). A new kernel for 2–4 columns decodes each weight block once (grid lookups, signs, scales) and reuses it for every column, loads weights with an evict-first hint, and fuses FFN gate+up(+GLU) for up to 4 columns, including gate/up pairs of different quant types. 4-column DRAM bandwidth (64 distinct weight copies, so nothing stays in L2): IQ3_S 17408×5120 675 → 749 GB/s, IQ3_XXS 634 → 714, Q4_K 5120×17408 634 → 785, Q2_K 466 → 704, fused IQ3_S gate/up 676 → 770; the card reads about 845 GB/s at best.
-2. **Cheaper MTP drafting** (`common/speculative.cpp`, `src/models/qwen35.cpp`, `src/llama-context.cpp`).
-   - The per-cycle MTP catch-up only needs the draft layer's K/V, so it now computes just the K/V projection, rope and cache write instead of the whole block (always on).
-   - `--spec-draft-vocab FILE` runs all draft steps in one graph (MTP block → reduced lm-head → argmax → token-id map → embedding row → next step): no per-step CPU round trip, no 248K-row lm-head, no top-k sort. The head is an exact copy of the selected `output.weight` and embedding rows (+106 MiB).
-   - `--spec-draft-fuse-catchup` folds the verified rows into the next draft graph, so each cycle runs one MTP graph.
-   - The target model's output is bit-identical to v1 (KLD 0).
-3. **Gumbel-coupled sampling** (`--spec-coupled-sampling`; `common/sampling.cpp`, new `GGML_OP_ADD_GUMBEL`). With temperature > 0 the target draws a random token, so an argmax draft only matches when that draw happens to be the argmax. The target's final draw is now a Gumbel-max over the candidates the sampler chain keeps, with noise hashed from (seed, token index, token id), and the draft adds the same noise to its logits before its argmax. That is still an exact sample from the model's distribution, but draft and target now usually pick the same token. At T 1.0 draft acceptance rose from 0.52 to 0.59 (short) and 0.36 to 0.41 (15.7K) for +6% throughput on the same build. A fixed seed gives a different (equally distributed) text than without the flag.
-4. **Decode attention** (`fattn-mma-f16.cuh`, `fattn.cu`). The Q4_0 MMA path is rewritten for ≤ 32 query columns: a cp.async ring prefetches mask/K/V stages and each warp builds its tensor-core fragments straight from the raw Q4_0 bytes. 1–2-token queries on Q4_0 with grouped heads now use it instead of the vector kernel, which read the cache once per query head: at 64K KV, 499 → 102 µs. The 4-token verify is ~15% faster (137 → 116 µs at 64K). This makes a Q4_0 MTP draft KV cache fast, which saves 276 MiB at 96K compared with F16.
-5. **INT8 prefill attention** (new `fattn-mma-q4i8.cu`). This card does 403 INT8 TOPS versus 104 TFLOPS for FP16 with FP32 accumulation. For prompt batches of ≥ 64 tokens, Q is quantized to int8 once and K tiles are re-quantized to int8 per row in shared memory, so the whole Q·Kᵀ runs on `mma.m16n8k32.s8`; softmax stays FP32 and P·V stays FP16 MMA. Q4_0 KV at 64K: 6.3 → 2.5 ms per 256-query call; also used for the MTP layer's KV. `GGML_CUDA_FA_NO_Q4I8=1` disables it.
-6. **Kernel fusion** (`ggml-cuda.cu`, norm, conv, gated-delta-net kernels). Mat-vecs that share an input reuse one quantized copy, which the producing norm/activation kernel writes directly (`GGML_CUDA_DISABLE_Q8_CACHE=1` disables it); residual add + RMS norm (+quantize), activation × input (+quantize), the conv-state gather/concat/snapshot/conv/silu chain, the GDN q/k L2 norms and the BF16 alpha/beta gates are fused. Launches per decode cycle: ~2,420 → ~1,090; verify graph 21.3 → 19.5 ms on its own.
-7. **Prefill matmuls and GDN** (`mmq*.cuh`, `gated_delta_net.cu`). The next weight/activation block is prefetched into shared memory while the tensor cores work (Blackwell only, bit-identical), IQ2/IQ3 sign decoding is cheaper, and new GDN kernels for prompt batches are about 3.5× faster (372 → ~105 µs per layer per 256 tokens). IQ1_M (one tensor in this quant) now runs through MMQ instead of dequantizing to F16 for cuBLAS, which removes a 178 MB temporary buffer (−170 MiB peak).
+### PDL is off by default
 
-After v2, a short-context decode cycle is about 21 ms, of which about 16 ms is the new 4-column mat-vec kernel running close to DRAM bandwidth.
+Upstream llama.cpp launches kernels with programmatic dependent launch on Blackwell: a kernel's successor may start before it finishes and wait on the device. Measured on this card with graph-level timing, the 4-token verify graph of v2 came out at either 18.1 or 19.5 ms depending on the server run (bimodal, ~7% apart), and at a stable 17.9 ms with `GGML_CUDA_PDL=0`. With this round's changes the effect was larger: 18.3–20.0 ms with PDL, 17.1 ms without ([`pdl-verify-graph.json`](results/2026-09-28/pdl-verify-graph.json)). The early-launched blocks sit on SM slots that the memory-bound mat-vec kernels need. v3 therefore only enables PDL with `GGML_CUDA_PDL=1`. The INT8 prefill attention kernel also no longer marks its parameters `__restrict__`, which upstream forbids together with PDL.
+
+If you benchmark llama.cpp on this GPU, check run-to-run spreads: a single A/B run can land in either mode.
 
 ## Runtime configuration
 
 [`pi2-llama-server`](pi2-llama-server) contains the exact launch flags. Its defaults match the paths above and can be overridden with `PI2_LLAMA_SERVER_BIN`, `PI2_LLAMA_MODEL`, `PI2_DRAFT_VOCAB` and `PI2_CTX`.
 
 ```text
---ctx-size 131072
---n-gpu-layers all
---fit off
---no-context-shift
---flash-attn on
---cache-type-k q4_0
---cache-type-v q4_0
---batch-size 512
---ubatch-size 256
---threads 8
---threads-batch 8
---parallel 1
---cache-ram 0
---ctx-checkpoints 0
---jinja
---reasoning on
---reasoning-effort xhigh
---reasoning-budget 16384
---reasoning-preserve
---temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
---presence-penalty 0.0 --repeat-penalty 1.0
---spec-type draft-mtp
---spec-draft-n-max 3
---spec-draft-type-k q4_0
---spec-draft-type-v q4_0
---spec-draft-vocab /home/fever/.pi2/agent/draft-vocab.txt
---spec-draft-vocab-n 16384
---spec-draft-fuse-catchup
---spec-coupled-sampling
+--ctx-size 131072            (or 98304 / 65536, chosen from free VRAM; see below)
+--n-gpu-layers all --fit off --no-context-shift
+--flash-attn on --cache-type-k q4_0 --cache-type-v q4_0
+--batch-size 512 --ubatch-size 256 --threads 8 --threads-batch 8 --parallel 1
+--cache-ram 0 --ctx-checkpoints 0
+--jinja --reasoning on --reasoning-effort xhigh --reasoning-budget 16384 --reasoning-preserve
+--temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.0
+--spec-type draft-mtp --spec-draft-n-max 5 --spec-draft-adaptive
+--spec-draft-type-k q4_0 --spec-draft-type-v q4_0
+--spec-draft-vocab /home/fever/.pi2/agent/draft-vocab.txt --spec-draft-vocab-n 16384
+--spec-draft-fuse-catchup --spec-coupled-sampling
 ```
 
-Why these values:
-
-- **128K context:** llama-server peaks at 14,926 MiB with a 128.8K-token prompt, which leaves about 1.2 GB of the 16,303 MiB card for the desktop. With heavier desktop GPU use (a game launcher measured up to 1.9 GB) use 96K: `systemctl --user set-environment PI2_CTX=98304` before the service starts, or `Environment=PI2_CTX=98304` in the unit.
-- **Q4_0 draft KV:** with v2's attention path it is as fast as F16 or faster at long context, and 276 MiB smaller at 96K.
-- **16,384 draft rows:** 8K rows cover fewer of the tokens generated in real sessions (97.2% vs 98.4% with context rows); 32K rows (99.3%) gave no measurable speedup for 2× the head memory.
-- **MTP n=3:** with fused drafting, n=4 was slower than n=3 at 15.7K and 62.5K.
-- **ubatch 256:** unchanged from v1; the VRAM goes to context instead.
+**Context from free VRAM.** llama-server peaks at 14,536 MiB at 128K and ~13,910 MiB at 96K. With a desktop using ~1 GB of the card, the v2 build (peak ~14.9 GB at 128K) failed its first request while creating the cuBLAS handle. The launcher now reads free VRAM at start and picks 128K if the 128K peak + 350 MiB fits, else 96K, else 64K. `PI2_CTX` overrides it; for the systemd service use `systemctl --user set-environment PI2_CTX=98304` (and `unset-environment` to go back).
 
 ## systemd user service
 
@@ -220,117 +192,98 @@ The unit keeps `KillSignal=SIGINT`; SIGINT shutdown is clean.
 
 ## Results
 
-Raw JSON and logs are in [`results/2026-09-27/`](results/2026-09-27/). "v1" is the previous recipe's build (commit `4b1a27fa0` + the 2026-09-26 patch, its flags, 96K) and "v2" this recipe's build and flags at 96K unless noted; same model and desktop, run back to back. Decode rates include thinking tokens.
+Raw JSON and logs are in [`results/2026-09-28/`](results/2026-09-28/). "v2" is the previous recipe's build and launcher flags, "v3" this recipe's; both at 96K so both fit next to the desktop, same model, run back to back. Decode rates include thinking tokens.
 
-### Long-context benchmark
+### Real agent sessions
 
-[`benchmark_chat.py`](benchmark_chat.py) streams from `/v1/chat/completions` with reasoning effort xhigh, prompt caching off and `ignore_eos`, on a repetitive synthetic prompt (real draft acceptance differs). Temperature 0, seed 3407; short 2 runs, others 1.
+[`replay_bench.py`](replay_bench.py) regenerates assistant turns from local Pi session logs: for each turn it sends the real history (system prompt, user turns, earlier assistant turns with reasoning and tool calls, tool results) with the server's production sampler, and measures decode, prefill and draft acceptance. The same 28 turns from 4 of my sessions were used for every build; only timings are published ([`replay-v2.json`](results/2026-09-28/replay-v2.json), [`replay-v3.json`](results/2026-09-28/replay-v3.json)).
 
-| workload | build | decode tok/s | ms per cycle | prefill tok/s | TTFT s | draft acceptance |
-|---|---|---:|---:|---:|---:|---:|
-| short: 120 prompt / 256 out | v1 | 99.4 | 27.3 | — | — | 0.58 |
-| | **v2** | **130.0 / 131.6** | **21.2** | — | — | 0.59 / 0.61 |
-| mid: 15,694 prompt / 512 out | v1 | 83.2 | 28.2 | 1,591 | 9.9 | 0.45 |
-| | **v2** | **104.7** | **22.0** | **2,030** | **7.7** | 0.43 |
-| long: 62,494 prompt / 512 out | v1 | 74.9 | 30.8 | 1,276 | 49.0 | 0.44 |
-| | **v2** | **98.0** | **23.6** | **1,814** | **34.5** | 0.44 |
-| vlong: 92,914 prompt / 512 out | v1 | 68.4 | 32.3 | 1,125 | 82.7 | 0.40 |
-| | **v2** | **94.8** | **24.8** | **1,696** | **54.9** | 0.45 |
-
-A verify cycle is one 4-token target pass plus drafting; ms per cycle = mean accepted length × 1000 / decode tok/s.
+| | v2 | v3 |
+|---|---:|---:|
+| decode | 136.6 tok/s | **147.2 tok/s** |
+| draft acceptance | 0.672 | 0.606 (longer drafts) |
+| prefill (325,672 prompt tokens) | 2,005 tok/s | **2,177 tok/s** |
 
 ```bash
-PID="$(systemctl --user show -p MainPID --value pi2-llama.service)"
-python3 benchmark_chat.py --pid "$PID" --runs 2 --tokens 256 --repeats 1    --label short --output /tmp/short.json
-python3 benchmark_chat.py --pid "$PID" --runs 1 --tokens 512 --repeats 600  --label mid   --output /tmp/mid.json
-python3 benchmark_chat.py --pid "$PID" --runs 1 --tokens 512 --repeats 2400 --label long  --output /tmp/long.json
-python3 benchmark_chat.py --pid "$PID" --runs 1 --tokens 512 --repeats 3570 --label vlong --output /tmp/vlong.json
+python3 replay_bench.py --url http://127.0.0.1:8003 --out /tmp/replay.json   # REPLAY_SESSIONS=<dir> to pick sessions
 ```
 
-### With the production sampler
+### Synthetic long-context benchmark
 
-Same prompts with the server's own sampler (temperature 1.0, top-k 20, top-p 0.95) and a different seed per run (`--server-sampling --vary-seed`), which is how the model is actually used:
+[`benchmark_chat.py`](benchmark_chat.py), temperature 0, seed 3407, prompt caching off, `ignore_eos`, repetitive synthetic prompt:
 
-| workload | runs | v1 decode tok/s | v2 decode tok/s | v1 acceptance | v2 acceptance |
-|---|---:|---:|---:|---:|---:|
-| short | 6 | 98.6 | **129.5** | 0.57 | 0.59 |
-| mid (15.7K) | 3 | 75.6 | **111.7** | 0.38 | 0.49 |
-| long (62.5K) | 1 | 65.7 | **96.0** | 0.34 | 0.43 |
+| workload | build | decode tok/s | prefill tok/s | TTFT s | draft acceptance |
+|---|---|---:|---:|---:|---:|
+| short: 120 prompt / 256 out (2 runs) | v2 | 129.4 / 131.7 | — | — | 0.59 / 0.61 |
+| | **v3** | **130.7 / 138.2** | — | — | 0.57 / 0.59 |
+| mid: 15,694 prompt / 512 out | v2 | 104.5 | 2,028 | 7.8 | 0.43 |
+| | **v3** | **109.6** | **2,200** | **7.2** | 0.46 |
+| long: 62,494 prompt / 512 out | v2 | 97.8 | 1,812 | 34.6 | 0.44 |
+| | **v3** | **99.7** | **1,949** | **32.1** | 0.46 |
+| vlong: 92,914 prompt / 512 out | v2 | 94.7 | 1,694 | 55.0 | 0.45 |
+| | **v3** | **100.2** | **1,814** | **51.3** | 0.50 |
 
-The single long run is noisy; its cycle time (30.7 → 23.8 ms) matches the temperature-0 table.
+With the production sampler (`--server-sampling --vary-seed`): short 129.2 → **137.2** tok/s (mean of 6 seeds), 15.7K 111.6 → 111.1 (3 seeds), 62.5K 95.8 → **100.7** (1 run).
 
 ### 128K context
 
-With `--ctx-size 131072`:
-
-- A 128,794-token prompt prefilled at 1,576 tok/s (81.7 s) and decoded at 91.3 tok/s. llama-server loaded at 14,804 MiB and peaked at 14,926 MiB; the card as a whole peaked at 15,074 MiB with a light desktop.
-- **Ledger recall:** four values planted across a 119,457-token prompt were all returned exactly (cold prefill 1,606 tok/s). An append-only follow-up (the previous answer plus a new question, as an agent session sends it) reused 119,645 cached tokens and answered in 0.7 s ([`recall-120k-v2.json`](results/2026-09-27/recall-120k-v2.json)).
-- 160K (163,840) ran out of memory during prefill in a run made before the IQ1_M change freed 170 MiB. It was not retried: even if it fits now, it would leave well under 1 GB for the desktop.
+- A 128,794-token prompt prefilled at 1,680 tok/s (76.8 s) and decoded at 93.2 tok/s; llama-server loaded at 14,402 MiB and peaked at 14,530 MiB.
+- Ledger recall: four values planted across a 119,457-token prompt were all returned exactly (cold prefill 1,715 tok/s, decode 155 tok/s). An append-only follow-up reused 119,645 cached tokens and answered in 0.7 s ([`recall-120k-v3.json`](results/2026-09-28/recall-120k-v3.json)).
 
 ## Numerical checks
 
-**Output probabilities vs v1.** `llama-perplexity --kl-divergence` on WikiText-2 test, 8 chunks of 2,048 tokens, Q4_0 KV, flash attention. Reference: the v1 build at `-ub 4`, which runs the same small-batch kernels as MTP verification.
+**Output probabilities vs v1.** `llama-perplexity --kl-divergence` on WikiText-2 test, 8 chunks of 2,048 tokens, Q4_0 KV, flash attention; reference: the v1 build at `-ub 4`.
 
 | run vs v1 `-ub 4` | mean KLD | same top token | PPL ratio |
 |---|---:|---:|---:|
-| v1 `-ub 256` (v1's own batch-size noise) | 0.0074 | 97.91% | 0.9986 ± 0.0012 |
-| v2 `-ub 4` (verify path) | 0.0031 | 98.16% | 1.0003 ± 0.0009 |
-| v2 `-ub 256` (prefill path) | 0.0054 | 97.78% | 1.0004 ± 0.0010 |
+| v1 `-ub 256` (v1's own batch-size noise) | 0.0074 | 97.91% | 0.9986 |
+| v3 `-ub 4` (4-token verify path) | 0.0029 | 98.23% | 1.0002 |
+| v3 `-ub 6` (5–8-token verify path, used by longer drafts) | 0.0044 | 98.27% | 1.0014 |
+| v3 `-ub 256` (prefill path; identical to v2) | 0.0054 | 97.78% | 1.0004 |
 
-Both v2 paths differ from v1 by less than v1 differs from itself across batch sizes. The drafting changes (items 2 and 3) do not touch the target's logits.
+**Tests and sanitizers:**
 
-**Sampling exactness** (`tests/test-sampling-coupled.cpp`). One million coupled draws over 1,000 seeds × 1,000 token positions match the truncated softmax (chi-square p 0.30–0.97; the stock sampler scores 0.06–0.51 on the same test). A simulated speculative decoder with five different drafters (none, coupled, random, pure noise and an oracle that picks cycle lengths from future noise) emits exactly the non-speculative token sequence over 12,000 seeds, and planting a noise-reuse bug fails the test with chi² 5,418. On the server, 16 of 16 seeded requests were byte-identical with the fused and the classic drafter.
+- `test-backend-ops` on CUDA0: 18,504 / 18,504 pass; flash attention, mat-vec and fusion suites also pass with `GGML_CUDA_PDL=1`.
+- `test-gdn-replay`: replay vs snapshots bitwise identical over 400 randomized verify batches with rollbacks; `test-sampling-coupled`: exactness and drafter-independence checks pass, including adaptive draft lengths up to 7.
+- `compute-sanitizer` memcheck and synccheck: 0 errors on the new mat-vec, MMQ and GDN paths. racecheck reports hazards in the warp-specialized MMQ's producer/consumer hand-off (`bar.arrive` → `bar.sync`), which racecheck does not model; a minimal reproduction of the same protocol is correct over 200 × 70 blocks while deliberately broken variants are caught and corrupt data, and 73,800 stress runs on real weights were bit-identical to v2.
+- Each change was adversarially reviewed before integration; the reviews fixed a replay bug with 3+ parallel sequences, a fusion that broke tools reading activations through a scheduler callback (`llama-imatrix`), and a missing shape check, none reachable with this recipe's flags.
 
-**Draft acceptance** depends on the text generated, so at temperature 0 the two builds' acceptance is measured on different outputs; all throughput numbers already include it.
+**Service checks with the installed service:** the Pi2 smoke test passes (quality probes, tool-call round trips, cross-request state isolation), and a real Pi coding session (read, edit, bash, write) completes with the prompt cache reused on every turn and 4.5–5.6 tokens per verify cycle.
 
-**Kernel tests and sanitizers:**
-
-- The full `test-backend-ops` suite on CUDA0 passes (17,436 cases, including new ones for this patch: masked attention tails, GQA 2–12, 1–1,030-token batches, row and K tails, strided/permuted mat-vec operands, fusion patterns with shared intermediates and in-place rewrites).
-- `compute-sanitizer` memcheck, racecheck and synccheck report no errors or hazards on the new attention, mat-vec, fusion and GDN paths.
-- Independent reviews of each change found and fixed 8 bugs before release, none of them reachable with this recipe's flags: NaN output when a stream-K block started past a fully masked KV tail (multi-sequence or ≥1,024-token batches), FP16 precision loss for very small V scales, a multi-architecture build break, a server abort when a draft decode triggered a memory update (`n_cmpl` > 1, KV shift, cache reuse), a crash after a prompt-cache restore with deferred catch-up rows, a read-before-wait race in two fused kernels, fused mat-vec + add ignoring a non-unit addend stride, and a missing eligibility check on the quantized-input cache.
-
-**Service checks with the installed service:** the Pi2 API smoke test passes (quality probes, tool-call round trips, cross-request state isolation, long-to-short isolation), and a real Pi coding session (read, edit, bash, write) completes with the prompt cache reused on every turn.
-
-One behaviour to know about, unchanged from v1: re-sending an *identical* long prompt after a reply does not hit the cache. The model's recurrent layers cannot be rolled back past the generated reply without `--ctx-checkpoints`. Append-only follow-ups, which is what chat clients send, reuse it.
+As before, re-sending an *identical* long prompt after a reply does not hit the cache: the recurrent layers cannot be rolled back past the generated reply without `--ctx-checkpoints`. Append-only follow-ups, which is what chat clients send, reuse it.
 
 ## Candidates that lost
 
-- **MTP n=4:** slower than n=3 at 15.7K and 62.5K.
-- **Q8_0 draft KV:** ran out of memory at 96K.
-- **Re-quantizing the MTP block to Q4_K:** no speed change.
-- **32K draft rows:** no measurable gain over 16K; 8K rows cover fewer generated tokens.
-- **MMQ with 128-row tiles for IQ3/IQ4 (+6–9% prefill):** failed the quality bar (same-top 97.42%, KLD 0.0078).
-- **L2 prefetch and shared-memory grid tables in the mat-vec kernel:** 2–12% slower.
-- **Prefetching GDN state into L2, a separate gated-norm kernel:** no measurable gain.
-- **Backend (GPU) sampling:** llama.cpp disables it when a reasoning budget is set; CPU sampling costs < 1% of a cycle here anyway.
-- **160K context:** out of memory during prefill (before the IQ1_M change), and too little headroom for a desktop in any case.
+- **Fixed 7-token drafts:** 8-token verification still costs ~4 ms more per cycle than 4-token; adaptive ≤ 7 also lost to adaptive ≤ 5.
+- **PDL:** see above.
+- **A tensor-core mat-vec for 5–8 columns:** slower than the dp4a kernel (426 vs 622 GB/s).
+- **Doing the MMQ split-K fixup inside the matmul kernel; a rewritten Q2_K prefill matmul:** no gain / 21% slower.
+- **Larger GDN replay rings:** the smallest ring (2 × (n_max+1) rows) was fastest.
+- From earlier rounds: MTP n=4 with the v2 kernels, Q8_0 draft KV (out of memory), MMQ with 128-row tiles (quality bar), 160K context (out of memory next to a desktop).
 
-Ideas not pursued:
-
-- The GDN kernel writes four full recurrent-state snapshots per layer per verify for rollback (~600 MB per cycle); a cheaper rollback scheme could save up to ~0.5 ms per cycle.
-- Staging mat-vec weights through shared memory with `cp.async`; IQ3_S/IQ3_XXS/IQ2 at 4 columns still have 5–10% to the bandwidth limit.
-- An MMQ rewrite that overlaps IQ dequantization with the tensor-core work (dequant is ~20% of an IQ3_S prefill matmul).
+Next ideas: a 16-byte-aligned activation layout, which the mat-vec needs to make 5–8-token verification nearly as cheap as 4-token (it touches every fused producer); the Q2_K prefill matmul, which runs at half the speed of the other types; the split-K fixup (~2.4 ms per prefill ubatch).
 
 ## MTP correctness caveat
 
-llama.cpp issue [#27296](https://github.com/ggml-org/llama.cpp/issues/27296) tracks intermittent MTP state surviving across requests and tool-call truncation; it is still open upstream. The installed MTP-3 service passed the tool round-trip and state-isolation tests, and the fused drafting paths were tested across long→short requests, prompt-cache restores and multiple completions per request. If a coding session shows cross-request text, malformed tool arguments or a server 500, restart with `--spec-type none` and keep the failing prompts. The fused drafting modes can also be dropped individually by removing `--spec-draft-vocab`, `--spec-draft-fuse-catchup` or `--spec-coupled-sampling`.
+llama.cpp issue [#27296](https://github.com/ggml-org/llama.cpp/issues/27296) tracks intermittent MTP state surviving across requests and tool-call truncation; it is still open upstream. The installed service passed the tool round-trip and state-isolation tests, and the fused and adaptive drafting paths were tested across long→short requests, prompt-cache restores and multiple completions per request. If a coding session shows cross-request text, malformed tool arguments or a server 500, replace the launcher's `speculation=(...)` line with `speculation=(--spec-type none)` and keep the failing prompts. (Appending `--spec-type none` to the command line is not enough: the option adds to the list of speculation types instead of replacing it.) The drafting features can also be dropped one at a time: `--spec-draft-adaptive`, `--spec-coupled-sampling`, `--spec-draft-fuse-catchup`, `--spec-draft-vocab`.
 
 ## Previous recipes
 
-- **2026-09-26:** GSQ-RCO IQ3_S at 96K with MTP-3 and the v1 CUDA patch; 100.4 / 72.0 / 68.4 tok/s at short / 62K / 93K on the 1,024-token benchmark (commit `e6e9f1b`).
+- **2026-09-27:** v2 patch at 128K with MTP-3; 131 / 105 / 98 / 95 tok/s at short / 15.7K / 62.5K / 92.9K (commit `f249515`).
+- **2026-09-26:** v1 patch at 96K with MTP-3; 100.4 / 72.0 / 68.4 tok/s at short / 62K / 93K on the 1,024-token benchmark (commit `e6e9f1b`).
 - **2026-08-29:** Huihui UD-Q3_K_XL at 65K with adaptive MTP n=3/n=2 tiers, build 10711; 82.05 tok/s on the 7.3K `benchmark.py` shape (commit `e9a3cb7`).
 - **2026-08-19:** the original Q3_K + MTP n=2 recipe; 69.05 tok/s (commit `259ce0f`).
 
 ## Files
 
-- [`pi2-llama-server`](pi2-llama-server): launcher with the exact flags.
+- [`pi2-llama-server`](pi2-llama-server): launcher with the exact flags and the free-VRAM context choice.
 - [`pi2-llama.service.example`](pi2-llama.service.example): systemd user unit.
-- [`cuda-kernels.patch`](cuda-kernels.patch): the llama.cpp patch (v1 + v2), including its tests.
-- [`build-draft-vocab.py`](build-draft-vocab.py): builds a draft vocabulary from your own text or Pi sessions.
-- [`draft-vocab-generic.txt`](draft-vocab-generic.txt): draft vocabulary ranked from public text.
-- [`benchmark_chat.py`](benchmark_chat.py): long-context chat-endpoint benchmark (`--server-sampling`, `--vary-seed` added).
+- [`cuda-kernels.patch`](cuda-kernels.patch): the llama.cpp patch (v1 + v2 + v3), including its tests.
+- [`build-draft-vocab.py`](build-draft-vocab.py), [`draft-vocab-generic.txt`](draft-vocab-generic.txt): draft vocabulary builder and a generic vocabulary.
+- [`replay_bench.py`](replay_bench.py): real-session replay benchmark for Pi session logs.
+- [`benchmark_chat.py`](benchmark_chat.py): synthetic long-context chat benchmark (`--server-sampling`, `--vary-seed`).
 - [`benchmark.py`](benchmark.py): the earlier recipes' 7.3K `/completion` benchmark.
-- [`results/2026-09-27/`](results/2026-09-27/): v1/v2 benchmark JSON (`long-context-*`, `sampling-*`), `context-128k-v2.json`, `recall-120k-v2.json`, `vocab-generic-v2-*`, per-run draft acceptance, and the KLD logs. The 2026-09-26 results are still in [`results/2026-09-26/`](results/2026-09-26/).
+- [`results/2026-09-28/`](results/2026-09-28/): v2/v3 benchmark JSON (`v2-*`, `v3-*`, `sampling-*`, `replay-*`), `context-128k-v3.json`, `recall-120k-v3.json`, `draft-length-*.json`, `pdl-verify-graph.json`, per-run draft acceptance, KLD logs. Earlier results remain in `results/2026-09-27/` and `results/2026-09-26/`.
 
 ## References
 
@@ -339,5 +292,6 @@ llama.cpp issue [#27296](https://github.com/ggml-org/llama.cpp/issues/27296) tra
 - llama.cpp build documentation: <https://github.com/ggml-org/llama.cpp/blob/master/docs/build.md>
 - llama.cpp speculative decoding: <https://github.com/ggml-org/llama.cpp/blob/master/docs/speculative.md>
 - MTP state issue: <https://github.com/ggml-org/llama.cpp/issues/27296>
+- PDL and `__restrict__`: <https://github.com/ggml-org/llama.cpp/pull/24030>
 - FR-Spec (frequency-ranked draft vocabularies): <https://arxiv.org/abs/2502.14856>
 - SageAttention (INT8 attention): <https://arxiv.org/abs/2410.02367>
