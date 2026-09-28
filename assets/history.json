@@ -162,5 +162,37 @@
   "from_index": 2
  },
  "timeline_note": "Aug 19 / Aug 29: as published in those recipes \u00b7 Sep releases re-measured back to back on 2026-09-28 at 96K context",
+ "breakdown": [
+  {
+   "label": "stock llama.cpp",
+   "verify": 10.561,
+   "draft": 1.798,
+   "idle": 0.641,
+   "tokens": 12849
+  },
+  {
+   "label": "v1 \u00b7 Sep 26",
+   "verify": 7.875,
+   "draft": 1.803,
+   "idle": 0.566,
+   "tokens": 11890
+  },
+  {
+   "label": "v2 \u00b7 Sep 27",
+   "verify": 6.178,
+   "draft": 0.303,
+   "idle": 0.849,
+   "tokens": 12148
+  },
+  {
+   "label": "v3 \u00b7 Sep 28",
+   "verify": 5.229,
+   "draft": 0.245,
+   "idle": 1.389,
+   "tokens": 11915
+  }
+ ],
+ "breakdown_xmax": 14,
+ "breakdown_note": "graph-level nsys traces of the 28-turn real-session replay; drafting includes the MTP catch-up",
  "session_note": "one back-to-back session, 2026-09-28 \u00b7 temperature 0 except real sessions (server sampler, T 1.0)"
 }
