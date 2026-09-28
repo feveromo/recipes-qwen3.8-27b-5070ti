@@ -40,6 +40,13 @@ The first two points are the numbers published with the August recipes (differen
   <img alt="Grouped column chart of prompt-processing tokens/s for stock, v1, v2 and v3. Real agent sessions 1,536, 1,560, 2,004, 2,179. 15.7K prompt 1,626, 1,593, 2,032, 2,211. 62.5K prompt 1,117, 1,275, 1,812, 1,954. 92.9K prompt 931, 1,124, 1,694, 1,816." src="assets/prefill-light.svg" width="900">
 </picture>
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/breakdown-dark.svg">
+  <img alt="Stacked bar chart of milliseconds per generated token on real agent sessions, split into verify pass, MTP drafting and GPU idle. Stock 10.56 + 1.80 + 0.64 = 13.00 ms (77 tok/s); v1 7.88 + 1.80 + 0.57 = 10.24 ms (98 tok/s); v2 6.18 + 0.30 + 0.85 = 7.33 ms (136 tok/s); v3 5.23 + 0.25 + 1.39 = 6.86 ms (146 tok/s)." src="assets/breakdown-light.svg" width="900">
+</picture>
+
+Where the time per generated token goes on the real sessions, from graph-level nsys traces of the same replay (tracing costs 1–2%, hence 146 rather than 148 tok/s for v3). The verify pass, where the full 27B model checks a batch of drafted tokens, went from 10.56 ms per token on stock to 5.23 ms on v3. MTP drafting dropped from 1.80 to 0.25 ms when v2 fused it with the reduced vocabulary. GPU idle time between graphs rose to 1.39 ms in v3, the one part that got worse, and is now the largest target after the verify pass.
+
 The same numbers as a table (decode and prefill in tok/s):
 
 | | stock | v1 | v2 | v3 | stock → v3 |
