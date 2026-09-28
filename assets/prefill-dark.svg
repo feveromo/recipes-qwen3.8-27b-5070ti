@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="360" viewBox="0 0 900 360" role="img" aria-labelledby="t d" font-family='system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif'>
+<title id="t">Prompt processing by release</title><desc id="d">tokens/s, higher is better · same model, machine and session, 96K context. one back-to-back session, 2026-09-28 · temperature 0 except real sessions (server sampler, T 1.0)</desc>
+<rect x="0.5" y="0.5" width="899" height="359" rx="12" fill="#1a1a19" stroke="rgba(255,255,255,0.10)"/>
+<text x="24.0" y="32.0" font-size="17" fill="#ffffff" text-anchor="start" font-weight="600" >Prompt processing by release</text>
+<text x="24.0" y="52.0" font-size="12.5" fill="#c3c2b7" text-anchor="start" font-weight="400" >tokens/s, higher is better · same model, machine and session, 96K context</text>
+<rect x="24.0" y="67.0" width="10" height="10" rx="2" fill="#184f95"/>
+<text x="39.0" y="76.0" font-size="12" fill="#c3c2b7" text-anchor="start" font-weight="400" >stock llama.cpp</text>
+<rect x="165.0" y="67.0" width="10" height="10" rx="2" fill="#2a78d6"/>
+<text x="180.0" y="76.0" font-size="12" fill="#c3c2b7" text-anchor="start" font-weight="400" >v1 · Sep 26</text>
+<rect x="277.2" y="67.0" width="10" height="10" rx="2" fill="#5598e7"/>
+<text x="292.2" y="76.0" font-size="12" fill="#c3c2b7" text-anchor="start" font-weight="400" >v2 · Sep 27</text>
+<rect x="389.4" y="67.0" width="10" height="10" rx="2" fill="#9ec5f4"/>
+<text x="404.4" y="76.0" font-size="12" fill="#c3c2b7" text-anchor="start" font-weight="400" >v3 · Sep 28</text>
+<line x1="58.0" y1="296.0" x2="882.0" y2="296.0" stroke="#383835" stroke-width="1"/>
+<text x="50.0" y="300.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" font-variant-numeric="tabular-nums">0</text>
+<line x1="58.0" y1="245.0" x2="882.0" y2="245.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="50.0" y="249.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" font-variant-numeric="tabular-nums">600</text>
+<line x1="58.0" y1="194.0" x2="882.0" y2="194.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="50.0" y="198.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" font-variant-numeric="tabular-nums">1,200</text>
+<line x1="58.0" y1="143.0" x2="882.0" y2="143.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="50.0" y="147.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" font-variant-numeric="tabular-nums">1,800</text>
+<line x1="58.0" y1="92.0" x2="882.0" y2="92.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="50.0" y="96.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" font-variant-numeric="tabular-nums">2,400</text>
+<path d="M96.0,296.0 V169.4 Q96.0,165.4 100.0,165.4 H114.0 Q118.0,165.4 118.0,169.4 V296.0 Z" fill="#184f95"/>
+<text x="107.0" y="159.4" font-size="10.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >1,536</text>
+<path d="M132.0,296.0 V167.4 Q132.0,163.4 136.0,163.4 H150.0 Q154.0,163.4 154.0,167.4 V296.0 Z" fill="#2a78d6"/>
+<text x="143.0" y="157.4" font-size="10.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >1,560</text>
+<path d="M168.0,296.0 V129.7 Q168.0,125.7 172.0,125.7 H186.0 Q190.0,125.7 190.0,129.7 V296.0 Z" fill="#5598e7"/>
+<text x="179.0" y="119.7" font-size="10.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >2,004</text>
+<path d="M204.0,296.0 V114.8 Q204.0,110.8 208.0,110.8 H222.0 Q226.0,110.8 226.0,114.8 V296.0 Z" fill="#9ec5f4"/>
+<text x="215.0" y="104.8" font-size="10.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >2,179</text>
+<text x="161.0" y="316.0" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="600" >Real agent sessions</text>
+<text x="161.0" y="333.0" font-size="11.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >stock → v3: 1.42×</text>
+<path d="M302.0,296.0 V161.8 Q302.0,157.8 306.0,157.8 H320.0 Q324.0,157.8 324.0,161.8 V296.0 Z" fill="#184f95"/>
+<text x="313.0" y="151.8" font-size="10.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >1,626</text>
+<path d="M338.0,296.0 V164.6 Q338.0,160.6 342.0,160.6 H356.0 Q360.0,160.6 360.0,164.6 V296.0 Z" fill="#2a78d6"/>
+<text x="349.0" y="154.6" font-size="10.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >1,593</text>
+<path d="M374.0,296.0 V127.3 Q374.0,123.3 378.0,123.3 H392.0 Q396.0,123.3 396.0,127.3 V296.0 Z" fill="#5598e7"/>
+<text x="385.0" y="117.3" font-size="10.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >2,032</text>
+<path d="M410.0,296.0 V112.1 Q410.0,108.1 414.0,108.1 H428.0 Q432.0,108.1 432.0,112.1 V296.0 Z" fill="#9ec5f4"/>
+<text x="421.0" y="102.1" font-size="10.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >2,211</text>
+<text x="367.0" y="316.0" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="600" >15.7K prompt</text>
+<text x="367.0" y="333.0" font-size="11.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >stock → v3: 1.36×</text>
+<path d="M508.0,296.0 V205.1 Q508.0,201.1 512.0,201.1 H526.0 Q530.0,201.1 530.0,205.1 V296.0 Z" fill="#184f95"/>
+<text x="519.0" y="195.1" font-size="10.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >1,117</text>
+<path d="M544.0,296.0 V191.6 Q544.0,187.6 548.0,187.6 H562.0 Q566.0,187.6 566.0,191.6 V296.0 Z" fill="#2a78d6"/>
+<text x="555.0" y="181.6" font-size="10.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >1,275</text>
+<path d="M580.0,296.0 V146.0 Q580.0,142.0 584.0,142.0 H598.0 Q602.0,142.0 602.0,146.0 V296.0 Z" fill="#5598e7"/>
+<text x="591.0" y="136.0" font-size="10.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >1,812</text>
+<path d="M616.0,296.0 V133.9 Q616.0,129.9 620.0,129.9 H634.0 Q638.0,129.9 638.0,133.9 V296.0 Z" fill="#9ec5f4"/>
+<text x="627.0" y="123.9" font-size="10.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >1,954</text>
+<text x="573.0" y="316.0" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="600" >62.5K prompt</text>
+<text x="573.0" y="333.0" font-size="11.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >stock → v3: 1.75×</text>
+<path d="M714.0,296.0 V220.9 Q714.0,216.9 718.0,216.9 H732.0 Q736.0,216.9 736.0,220.9 V296.0 Z" fill="#184f95"/>
+<text x="725.0" y="210.9" font-size="10.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >931</text>
+<path d="M750.0,296.0 V204.5 Q750.0,200.5 754.0,200.5 H768.0 Q772.0,200.5 772.0,204.5 V296.0 Z" fill="#2a78d6"/>
+<text x="761.0" y="194.5" font-size="10.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >1,124</text>
+<path d="M786.0,296.0 V156.0 Q786.0,152.0 790.0,152.0 H804.0 Q808.0,152.0 808.0,156.0 V296.0 Z" fill="#5598e7"/>
+<text x="797.0" y="146.0" font-size="10.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >1,694</text>
+<path d="M822.0,296.0 V145.6 Q822.0,141.6 826.0,141.6 H840.0 Q844.0,141.6 844.0,145.6 V296.0 Z" fill="#9ec5f4"/>
+<text x="833.0" y="135.6" font-size="10.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >1,816</text>
+<text x="779.0" y="316.0" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="600" >92.9K prompt</text>
+<text x="779.0" y="333.0" font-size="11.5" fill="#c3c2b7" text-anchor="middle" font-weight="400" >stock → v3: 1.95×</text>
+<text x="882.0" y="350.0" font-size="10.5" fill="#898781" text-anchor="end" font-weight="400" >one back-to-back session, 2026-09-28 · temperature 0 except real sessions (server sampler, T 1.0)</text>
+</svg>

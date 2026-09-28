@@ -15,11 +15,49 @@ Same weights, previous recipe's build (v2) vs this one (v3), run back to back:
 
 At 128K a 128,794-token prompt prefills at 1,680 tok/s and then decodes at 93 tok/s. Output quality is unchanged within noise ([Numerical checks](#numerical-checks)).
 
-For reference, v2 was +26–39% faster than v1 on decode and up to +51% on prefill ([previous README](https://github.com/feveromo/recipes-qwen3.8-27b-5070ti/blob/f249515/README.md)).
+For reference, v2 was +26–39% faster than v1 on decode and up to +51% on prefill ([previous README](https://github.com/feveromo/recipes-qwen3.8-27b-5070ti/blob/f249515/README.md)). Against stock llama.cpp on the same weights, v3 decodes real agent sessions 1.9× as fast and a 92.9K-token prompt 2.3× as fast ([Performance history](#performance-history)).
 
 The biggest single finding of this round is not a kernel: **upstream llama.cpp's programmatic dependent launch (PDL) made this setup randomly ~7% slower**, see [PDL](#pdl-is-off-by-default). The v3 patch turns it off by default.
 
 The usual caveats hold: this is a 16 GB configuration with little spare VRAM, and the patch is not upstream. It was written and tested only for this model on this GPU (`sm_120`). Every new kernel path checks the architecture, types and shapes it was tested for, and falls back to the v2/v1/stock code otherwise.
+
+## Performance history
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/timeline-dark.svg">
+  <img alt="Line chart of decode speed on the 7.3K-token benchmark.py across recipe releases: Aug 19 69.1 tok/s, Aug 29 82.1, Sep 26 v1 92.4, Sep 27 v2 119.3, Sep 28 v3 122.4; stock llama.cpp on the September model 72.4." src="assets/timeline-light.svg" width="900">
+</picture>
+
+The first two points are the numbers published with the August recipes (different quants and an older llama.cpp). The September recipes all use the same GSQ-RCO IQ3_S weights, so they were re-measured back to back in one session on 2026-09-28 together with stock llama.cpp (`4b1a27fa0`, no patch): each build with its own recipe's launch flags (stock with v1's: MTP with 3 draft tokens, F16 draft KV), all at 96K context so every build fits. On stock llama.cpp the September model is slower than the August 29 recipe on this benchmark; the patch accounts for the whole climb since.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/decode-dark.svg">
+  <img alt="Grouped column chart of decode tokens/s for stock, v1, v2 and v3. Real agent sessions 77.5, 98.3, 136.7, 148.4. Short prompt 87.4, 99.6, 131.5, 137.6. 15.7K prompt 73.5, 83.2, 104.9, 104.0. 62.5K prompt 53.3, 74.9, 98.0, 97.8. 92.9K prompt 44.7, 68.3, 94.8, 103.4." src="assets/decode-light.svg" width="900">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/prefill-dark.svg">
+  <img alt="Grouped column chart of prompt-processing tokens/s for stock, v1, v2 and v3. Real agent sessions 1,536, 1,560, 2,004, 2,179. 15.7K prompt 1,626, 1,593, 2,032, 2,211. 62.5K prompt 1,117, 1,275, 1,812, 1,954. 92.9K prompt 931, 1,124, 1,694, 1,816." src="assets/prefill-light.svg" width="900">
+</picture>
+
+The same numbers as a table (decode and prefill in tok/s):
+
+| | stock | v1 | v2 | v3 | stock → v3 |
+|---|---:|---:|---:|---:|---:|
+| decode, real agent sessions | 77.5 | 98.3 | 136.7 | **148.4** | 1.91× |
+| decode, short prompt (mean of 2) | 87.4 | 99.6 | 131.5 | **137.6** | 1.57× |
+| decode, 15.7K prompt | 73.5 | 83.2 | **104.9** | 104.0 | 1.41× |
+| decode, 62.5K prompt | 53.3 | 74.9 | **98.0** | 97.8 | 1.83× |
+| decode, 92.9K prompt | 44.7 | 68.3 | 94.8 | **103.4** | 2.31× |
+| decode, 7.3K `benchmark.py` (mean of 3) | 72.37 | 92.42 | 119.26 | **122.44** | 1.69× |
+| prefill, real agent sessions | 1,536 | 1,560 | 2,004 | **2,179** | 1.42× |
+| prefill, 15.7K prompt | 1,626 | 1,593 | 2,032 | **2,211** | 1.36× |
+| prefill, 62.5K prompt | 1,117 | 1,275 | 1,812 | **1,954** | 1.75× |
+| prefill, 92.9K prompt | 931 | 1,124 | 1,694 | **1,816** | 1.95× |
+| time to first token, 92.9K prompt | 99.9 s | 82.8 s | 55.0 s | **51.3 s** | −49% |
+| draft acceptance, real agent sessions | 0.578 | 0.597 | **0.672** | 0.609 | |
+
+Synthetic prompts run at temperature 0 with one run each unless noted; the real-session replay uses the server's production sampler (temperature 1.0). Greedy draft acceptance moves with any numeric change, so single synthetic runs vary by a few percent between sessions (the v2/v3 tables below are from a separate session). Raw JSON: [`results/2026-09-28/history/`](results/2026-09-28/history/); the charts are generated from [`assets/history.json`](assets/history.json) by [`assets/gen_charts.py`](assets/gen_charts.py).
 
 ## Verified hardware and software
 
@@ -283,7 +321,8 @@ llama.cpp issue [#27296](https://github.com/ggml-org/llama.cpp/issues/27296) tra
 - [`replay_bench.py`](replay_bench.py): real-session replay benchmark for Pi session logs.
 - [`benchmark_chat.py`](benchmark_chat.py): synthetic long-context chat benchmark (`--server-sampling`, `--vary-seed`).
 - [`benchmark.py`](benchmark.py): the earlier recipes' 7.3K `/completion` benchmark.
-- [`results/2026-09-28/`](results/2026-09-28/): v2/v3 benchmark JSON (`v2-*`, `v3-*`, `sampling-*`, `replay-*`), `context-128k-v3.json`, `recall-120k-v3.json`, `draft-length-*.json`, `pdl-verify-graph.json`, per-run draft acceptance, KLD logs. Earlier results remain in `results/2026-09-27/` and `results/2026-09-26/`.
+- [`results/2026-09-28/`](results/2026-09-28/): v2/v3 benchmark JSON (`v2-*`, `v3-*`, `sampling-*`, `replay-*`), `context-128k-v3.json`, `recall-120k-v3.json`, `draft-length-*.json`, `pdl-verify-graph.json`, per-run draft acceptance, KLD logs; `history/` holds the one-session stock/v1/v2/v3 runs behind the charts. Earlier results remain in `results/2026-09-27/` and `results/2026-09-26/`.
+- [`assets/`](assets/): the performance-history charts (light and dark SVG), their data (`history.json`) and generator (`gen_charts.py`).
 
 ## References
 

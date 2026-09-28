@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="340" viewBox="0 0 900 340" role="img" aria-labelledby="t d" font-family='system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif'>
+<title id="t">Decode speed across recipe releases</title><desc id="d">tokens/s on the 7.3K-token /completion benchmark (512 tokens, temperature 0). Aug 19 / Aug 29: as published in those recipes · Sep releases re-measured back to back on 2026-09-28 at 96K context</desc>
+<rect x="0.5" y="0.5" width="899" height="339" rx="12" fill="#fcfcfb" stroke="rgba(11,11,11,0.10)"/>
+<text x="24.0" y="32.0" font-size="17" fill="#0b0b0b" text-anchor="start" font-weight="600" >Decode speed across recipe releases</text>
+<text x="24.0" y="52.0" font-size="12.5" fill="#52514e" text-anchor="start" font-weight="400" >tokens/s on the 7.3K-token /completion benchmark (512 tokens, temperature 0)</text>
+<line x1="58.0" y1="262.0" x2="860.0" y2="262.0" stroke="#c3c2b7" stroke-width="1"/>
+<text x="50.0" y="266.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" font-variant-numeric="tabular-nums">0</text>
+<line x1="58.0" y1="214.0" x2="860.0" y2="214.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="50.0" y="218.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" font-variant-numeric="tabular-nums">40</text>
+<line x1="58.0" y1="166.0" x2="860.0" y2="166.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="50.0" y="170.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" font-variant-numeric="tabular-nums">80</text>
+<line x1="58.0" y1="118.0" x2="860.0" y2="118.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="50.0" y="122.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" font-variant-numeric="tabular-nums">120</text>
+<line x1="58.0" y1="70.0" x2="860.0" y2="70.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="50.0" y="74.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" font-variant-numeric="tabular-nums">160</text>
+<line x1="425.0" y1="175.2" x2="846.0" y2="175.2" stroke="#898781" stroke-width="1"/>
+<text x="425.0" y="190.2" font-size="10.5" fill="#898781" text-anchor="start" font-weight="400" >stock llama.cpp on the same IQ3_S model: 72.4</text>
+<path d="M98.0,179.1 L278.5,163.5 L459.0,151.1 L639.5,118.9 L820.0,115.1" fill="none" stroke="#104281" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="98.0" cy="179.1" r="5" fill="#104281" stroke="#fcfcfb" stroke-width="2"/>
+<text x="98.0" y="167.1" font-size="11.5" fill="#0b0b0b" text-anchor="middle" font-weight="400" >69.1</text>
+<text x="98.0" y="282.0" font-size="12" fill="#0b0b0b" text-anchor="middle" font-weight="600" >Aug 19</text>
+<text x="98.0" y="298.0" font-size="10.5" fill="#52514e" text-anchor="middle" font-weight="400" >Q3_K · MTP n=2</text>
+<text x="98.0" y="312.0" font-size="10.5" fill="#898781" text-anchor="middle" font-weight="400" >65K recipe</text>
+<circle cx="278.5" cy="163.5" r="5" fill="#104281" stroke="#fcfcfb" stroke-width="2"/>
+<text x="278.5" y="151.5" font-size="11.5" fill="#0b0b0b" text-anchor="middle" font-weight="400" >82.1</text>
+<text x="278.5" y="282.0" font-size="12" fill="#0b0b0b" text-anchor="middle" font-weight="600" >Aug 29</text>
+<text x="278.5" y="298.0" font-size="10.5" fill="#52514e" text-anchor="middle" font-weight="400" >UD-Q3_K_XL · MTP 3/2</text>
+<text x="278.5" y="312.0" font-size="10.5" fill="#898781" text-anchor="middle" font-weight="400" >65K recipe</text>
+<circle cx="459.0" cy="151.1" r="5" fill="#104281" stroke="#fcfcfb" stroke-width="2"/>
+<text x="459.0" y="139.1" font-size="11.5" fill="#0b0b0b" text-anchor="middle" font-weight="400" >92.4</text>
+<text x="459.0" y="282.0" font-size="12" fill="#0b0b0b" text-anchor="middle" font-weight="600" >Sep 26 · v1</text>
+<text x="459.0" y="298.0" font-size="10.5" fill="#52514e" text-anchor="middle" font-weight="400" >GSQ-RCO IQ3_S</text>
+<text x="459.0" y="312.0" font-size="10.5" fill="#898781" text-anchor="middle" font-weight="400" >96K recipe</text>
+<circle cx="639.5" cy="118.9" r="5" fill="#104281" stroke="#fcfcfb" stroke-width="2"/>
+<text x="639.5" y="106.9" font-size="11.5" fill="#0b0b0b" text-anchor="middle" font-weight="400" >119.3</text>
+<text x="639.5" y="282.0" font-size="12" fill="#0b0b0b" text-anchor="middle" font-weight="600" >Sep 27 · v2</text>
+<text x="639.5" y="298.0" font-size="10.5" fill="#52514e" text-anchor="middle" font-weight="400" >GSQ-RCO IQ3_S</text>
+<text x="639.5" y="312.0" font-size="10.5" fill="#898781" text-anchor="middle" font-weight="400" >128K recipe</text>
+<circle cx="820.0" cy="115.1" r="5" fill="#104281" stroke="#fcfcfb" stroke-width="2"/>
+<text x="820.0" y="103.1" font-size="11.5" fill="#0b0b0b" text-anchor="middle" font-weight="600" >122.4</text>
+<text x="820.0" y="282.0" font-size="12" fill="#0b0b0b" text-anchor="middle" font-weight="600" >Sep 28 · v3</text>
+<text x="820.0" y="298.0" font-size="10.5" fill="#52514e" text-anchor="middle" font-weight="400" >GSQ-RCO IQ3_S</text>
+<text x="820.0" y="312.0" font-size="10.5" fill="#898781" text-anchor="middle" font-weight="400" >128K recipe</text>
+<text x="882.0" y="332.0" font-size="10.5" fill="#898781" text-anchor="end" font-weight="400" >Aug 19 / Aug 29: as published in those recipes · Sep releases re-measured back to back on 2026-09-28 at 96K context</text>
+</svg>

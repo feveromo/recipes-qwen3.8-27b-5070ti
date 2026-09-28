@@ -1,0 +1,55 @@
+{
+  "label": "b73",
+  "server_context": 98304,
+  "generation": {
+    "n_predict": 512,
+    "temperature": 0.0,
+    "seed": 3407,
+    "ignore_eos": true
+  },
+  "prompt_tokens": 7322,
+  "results": [
+    {
+      "run": 1,
+      "prompt_tokens": 7322,
+      "wall_s": 7.930246945000363,
+      "ttft_s": 3.5731587450000006,
+      "predicted_tokens": 512,
+      "predicted_tps": 117.28673324085048,
+      "prompt_tps": 2053.7111952503788,
+      "prompt_ms": 3565.253,
+      "predicted_ms": 4356.844,
+      "peak_vram_mib": 14498,
+      "peak_rss_kib": 1574644,
+      "output_prefix": "\n\n<think>\nThe user wants a detailed technical analysis in continuous prose of at least 900 words. The topics to cover are: GPU memory bandwidth, quantization, KV cache precision, fused attention, and speculative decoding. They want it in co"
+    },
+    {
+      "run": 2,
+      "prompt_tokens": 7322,
+      "wall_s": 7.826636862999294,
+      "ttft_s": 3.5759987189994717,
+      "predicted_tokens": 512,
+      "predicted_tps": 120.22383749313302,
+      "prompt_tps": 2052.146149128973,
+      "prompt_ms": 3567.972,
+      "predicted_ms": 4250.405,
+      "peak_vram_mib": 14498,
+      "peak_rss_kib": 1574988,
+      "output_prefix": "\n\n<think>\nThe user wants a detailed technical analysis in continuous prose of at least 900 words. The topics to cover are: GPU memory bandwidth, quantization, KV cache precision, fused attention, and speculative decoding. They want it in co"
+    },
+    {
+      "run": 3,
+      "prompt_tokens": 7322,
+      "wall_s": 7.824824535000516,
+      "ttft_s": 3.5762976599999092,
+      "predicted_tokens": 512,
+      "predicted_tps": 120.2823882103487,
+      "prompt_tps": 2051.97419142212,
+      "prompt_ms": 3568.271,
+      "predicted_ms": 4248.336,
+      "peak_vram_mib": 14498,
+      "peak_rss_kib": 1575004,
+      "output_prefix": "\n\n<think>\nThe user wants a detailed technical analysis in continuous prose of at least 900 words. The topics to cover are: GPU memory bandwidth, quantization, KV cache precision, fused attention, and speculative decoding. They want it in co"
+    }
+  ]
+}

@@ -1,0 +1,166 @@
+{
+ "releases": [
+  {
+   "id": "stock",
+   "label": "stock llama.cpp",
+   "short": "stock"
+  },
+  {
+   "id": "v1",
+   "label": "v1 \u00b7 Sep 26",
+   "short": "v1"
+  },
+  {
+   "id": "v2",
+   "label": "v2 \u00b7 Sep 27",
+   "short": "v2"
+  },
+  {
+   "id": "v3",
+   "label": "v3 \u00b7 Sep 28",
+   "short": "v3"
+  }
+ ],
+ "decode": [
+  {
+   "label": "Real agent sessions",
+   "values": {
+    "stock": 77.5,
+    "v1": 98.3,
+    "v2": 136.7,
+    "v3": 148.4
+   }
+  },
+  {
+   "label": "Short prompt",
+   "values": {
+    "stock": 87.4,
+    "v1": 99.6,
+    "v2": 131.5,
+    "v3": 137.6
+   }
+  },
+  {
+   "label": "15.7K prompt",
+   "values": {
+    "stock": 73.5,
+    "v1": 83.2,
+    "v2": 104.9,
+    "v3": 104.0
+   }
+  },
+  {
+   "label": "62.5K prompt",
+   "values": {
+    "stock": 53.3,
+    "v1": 74.9,
+    "v2": 98.0,
+    "v3": 97.8
+   }
+  },
+  {
+   "label": "92.9K prompt",
+   "values": {
+    "stock": 44.7,
+    "v1": 68.3,
+    "v2": 94.8,
+    "v3": 103.4
+   }
+  }
+ ],
+ "prefill": [
+  {
+   "label": "Real agent sessions",
+   "values": {
+    "stock": 1536,
+    "v1": 1560,
+    "v2": 2004,
+    "v3": 2179
+   }
+  },
+  {
+   "label": "15.7K prompt",
+   "values": {
+    "stock": 1626,
+    "v1": 1593,
+    "v2": 2032,
+    "v3": 2211
+   }
+  },
+  {
+   "label": "62.5K prompt",
+   "values": {
+    "stock": 1117,
+    "v1": 1275,
+    "v2": 1812,
+    "v3": 1954
+   }
+  },
+  {
+   "label": "92.9K prompt",
+   "values": {
+    "stock": 931,
+    "v1": 1124,
+    "v2": 1694,
+    "v3": 1816
+   }
+  }
+ ],
+ "ttft_92_9k": {
+  "stock": 99.9,
+  "v1": 82.8,
+  "v2": 55.0,
+  "v3": 51.3
+ },
+ "acceptance_replay": {
+  "stock": 0.578,
+  "v1": 0.597,
+  "v2": 0.672,
+  "v3": 0.609
+ },
+ "b73": {
+  "stock": 72.37,
+  "v1": 92.42,
+  "v2": 119.26,
+  "v3": 122.44
+ },
+ "timeline": [
+  {
+   "label": "Aug 19",
+   "sub": "Q3_K \u00b7 MTP n=2",
+   "sub2": "65K recipe",
+   "value": 69.05
+  },
+  {
+   "label": "Aug 29",
+   "sub": "UD-Q3_K_XL \u00b7 MTP 3/2",
+   "sub2": "65K recipe",
+   "value": 82.05
+  },
+  {
+   "label": "Sep 26 \u00b7 v1",
+   "sub": "GSQ-RCO IQ3_S",
+   "sub2": "96K recipe",
+   "value": 92.42
+  },
+  {
+   "label": "Sep 27 \u00b7 v2",
+   "sub": "GSQ-RCO IQ3_S",
+   "sub2": "128K recipe",
+   "value": 119.26
+  },
+  {
+   "label": "Sep 28 \u00b7 v3",
+   "sub": "GSQ-RCO IQ3_S",
+   "sub2": "128K recipe",
+   "value": 122.44
+  }
+ ],
+ "timeline_ref": {
+  "label": "stock llama.cpp on the same IQ3_S model",
+  "value": 72.37,
+  "from_index": 2
+ },
+ "timeline_note": "Aug 19 / Aug 29: as published in those recipes \u00b7 Sep releases re-measured back to back on 2026-09-28 at 96K context",
+ "session_note": "one back-to-back session, 2026-09-28 \u00b7 temperature 0 except real sessions (server sampler, T 1.0)"
+}
